@@ -1,0 +1,15 @@
+:root {
+  --bg: #f5f4ef;
+  --ink: #151515;
+  --muted: #696861;
+  --quiet: #9a978d;
+  --surface: #fffdf8;
+  --line: rgba(21, 21, 21, 0.11);
+  --line-strong: rgba(21, 21, 21, 0.22);
+  --have: #145c43;
+  --missing: #d9d5c9;
+  --duplicate: #2f5f7c;
+  --accent: #d6e166;
+  --danger: #a8444b;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
