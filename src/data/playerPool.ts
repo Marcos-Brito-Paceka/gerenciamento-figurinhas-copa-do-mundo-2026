@@ -1,0 +1,16 @@
+export const playerPool = [
+  'Escudo',
+  'Pôster',
+  'Goleiro',
+  'Lateral',
+  'Zagueiro',
+  'Capitão',
+  'Meia',
+  'Camisa 10',
+  'Ponta',
+  'Centroavante',
+  'Reserva',
+  'Técnico',
+  'Torcida',
+  'Estádio',
+]
