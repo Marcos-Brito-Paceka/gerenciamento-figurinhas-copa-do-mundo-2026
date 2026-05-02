@@ -1,0 +1,103 @@
+1. Mapear a POC atual
+
+Funcionalidades
+ - Listar figurinhas
+ - Marcar figurinha como obtida
+ - Marcar repetidas
+ - Filtrar por país/time
+ - Ver progresso do álbum
+ - Salvar dados no localStorage
+
+Interface
+ - Tela inicial
+ - Lista ou grid de figurinhas
+ - Detalhes da figurinha
+ - Resumo de progresso
+ - Filtros e busca
+
+Dados
+ - Estrutura de uma figurinha
+ - Estrutura de seleções/categorias
+ - Estado salvo do usuário
+
+2. Definir a stack inicial
+
+Vanilla + TypeScript + Vite
+
+3. Separar responsabilidades do código
+Por exemplo:
+src/
+  components/
+    StickerCard/
+    ProgressBar/
+    FilterTabs/
+
+  pages/
+    Home/
+    Album/
+
+  hooks/
+    useStickers.ts
+    useLocalStorage.ts
+
+  services/
+    stickerStorage.ts
+
+  data/
+    stickers.ts
+    teams.ts
+
+  types/
+    sticker.ts
+
+  utils/
+    calculateProgress.ts
+
+4. Criar o modelo de dados
+Antes da tela, definimos o formato principal:
+
+export type Sticker = {
+  id: string;
+  number: number;
+  team: string;
+  playerName?: string;
+  category: 'team' | 'player' | 'special';
+};
+
+export type UserStickerState = {
+  stickerId: string;
+  owned: boolean;
+  repeated: number;
+};
+
+5. Criar o armazenamento local
+Vamos criar uma camada específica para lidar com localStorage.
+
+services/
+  stickerStorage.ts
+
+Ela será responsável por:
+ - Salvar progresso
+ - Ler progresso
+ - Atualizar figurinha
+ - Resetar álbum
+
+6. Criar a interface mobile-first
+
+Começaremos pelo mobile:
+ - Cards grandes e fáceis de tocar
+ - Filtros simples
+ - Busca acessível
+ - Barra de progresso visível
+ - Layout em grid adaptável
+
+
+ -----------------
+
+Como iniciar o projeto:
+
+npm create vite@latest .
+
+Vanilla
+TypeScript
+
