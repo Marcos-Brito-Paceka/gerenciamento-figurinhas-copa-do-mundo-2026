@@ -22,9 +22,7 @@ export const teams: Team[] = teamCatalog.map(([id, name, code], teamIndex) => ({
     const type =
       stickerIndex === 0
         ? "Escudo"
-        : stickerIndex > 16
-          ? "Especial"
-          : "Jogador";
+        : stickerIndex > 16 ? "Especial" : "Jogador";
 
     return {
       number: `${code} ${number}`,
