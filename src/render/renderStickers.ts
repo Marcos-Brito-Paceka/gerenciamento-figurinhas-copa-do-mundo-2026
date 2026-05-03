@@ -1,17 +1,23 @@
-import type { Team } from '../types/album'
+import type { Team } from "../types/album";
 
 const statusLabel = {
-  missing: 'Faltando',
-  have: 'Tenho',
-  duplicate: 'Repetida',
-}
+  missing: "Faltando",
+  have: "Tenho",
+  duplicate: "Repetida",
+};
 
-export function renderStickers(container: HTMLElement, team: Team): void {
+export function renderStickers(
+  container: HTMLElement,
+  team: Team,
+  changedStickerNumber?: string,
+): void {
   container.innerHTML = team.stickers
     .map(
       (sticker) => `
         <button 
-          class="sticker-cell sticker-cell--${sticker.status}"
+          class="sticker-cell sticker-cell--${sticker.status} ${
+            sticker.number === changedStickerNumber ? "changed" : ""
+          }"
           data-sticker="${sticker.number}"
           data-status="${sticker.status}"
         >
@@ -21,5 +27,5 @@ export function renderStickers(container: HTMLElement, team: Team): void {
         </button>
       `,
     )
-    .join('')
+    .join("");
 }

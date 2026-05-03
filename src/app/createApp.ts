@@ -11,6 +11,7 @@ import { renderAppShell } from "../render/renderAppShell";
 import { bindAppEvents } from "../events/bindAppEvents";
 import { createAppState } from "../state/appState";
 import { loadUIState, saveUIState } from '../services/uiStorage';
+import { playTapSound } from "../services/audioFeedback";
 
 function getElement<T extends HTMLElement>(selector: string): T {
   const element = document.querySelector<T>(selector);
@@ -24,9 +25,9 @@ function getElement<T extends HTMLElement>(selector: string): T {
 
 export function createApp(): void {
   const app = getElement<HTMLDivElement>("#app");
-
   const state = createAppState(loadProgress(teams));
-  const savedUI = loadUIState()
+  const savedUI = loadUIState();
+  let lastChangedStickerNumber = "";
 
   state.selectedTeamIndex = savedUI.selectedTeamIndex ?? 0
   state.activeFilter = savedUI.activeFilter ?? 'all'
@@ -113,7 +114,8 @@ export function createApp(): void {
     renderStickers(stickerMatrix, {
       ...selectedTeam,
       stickers,
-    });
+    }, lastChangedStickerNumber);
+  lastChangedStickerNumber = "";
   }
 
   function toggleStickerStatus(stickerNumber: string): void {
@@ -124,6 +126,9 @@ export function createApp(): void {
     if (!sticker) return;
 
     sticker.status = getNextStatus(sticker.status);
+    playTapSound();
+    navigator.vibrate?.(10);
+    lastChangedStickerNumber = stickerNumber;
 
     saveProgress(state.albumTeams);
     updateSelectedTeam(state.selectedTeamIndex);

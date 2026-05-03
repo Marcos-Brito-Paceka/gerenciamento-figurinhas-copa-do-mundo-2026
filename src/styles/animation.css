@@ -1,0 +1,13 @@
+@keyframes stickerFlip {
+  0% {
+    transform: scale(1) rotate(0);
+  }
+
+  45% {
+    transform: scale(1.08) rotate(-2deg);
+  }
+
+  100% {
+    transform: scale(1) rotate(0);
+  }
+}

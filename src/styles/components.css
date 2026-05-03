@@ -71,9 +71,21 @@
 
 .team-cell.active {
   border-color: var(--ink);
-  background: var(--ink);
-  color: var(--surface);
-  box-shadow: 0 8px 18px rgba(21, 21, 21, 0.18);
+  background: rgba(21, 21, 21, 0.06);
+  color: var(--ink);
+  box-shadow: 0 6px 18px rgba(21, 21, 21, 0.12);
+  transform: scale(0.95);
+}
+.team-matrix:has(.team-cell.active) .team-cell:not(.active) .team-flag {
+  opacity: 0.85;
+  filter: grayscale(0.1);
+}
+
+.team-cell .team-flag {
+  transition:
+    transform 160ms ease,
+    filter 160ms ease,
+    opacity 160ms ease;
 }
 
 .team-cell:active {
@@ -162,12 +174,20 @@
   color: var(--muted);
   font-size: 12px;
   font-weight: 860;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
 }
 
 #stickerFilters button.active {
   border-color: var(--ink);
-  background: var(--ink);
-  color: var(--surface);
+  background: linear-gradient(
+    180deg,
+    rgba(21, 21, 21, 0.08),
+    rgba(21, 21, 21, 0.02)
+  );
+  color: var(--ink);
 }
 
 .sticker-matrix {
@@ -197,6 +217,10 @@
 
 .sticker-cell:active {
   transform: scale(0.94);
+}
+
+.sticker-cell.changed {
+  animation: stickerFlip 420ms ease;
 }
 
 .sticker-cell strong {
@@ -281,4 +305,27 @@
 
 .team-toggle:active {
   transform: scale(0.98);
+}
+
+#teamSearch {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 14px;
+  margin-bottom: 10px;
+
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+
+  background: var(--surface);
+  color: var(--ink);
+
+  font-size: 14px;
+  font-weight: 700;
+
+  box-shadow: 0 2px 8px rgba(21, 21, 21, 0.06);
+
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
 }
