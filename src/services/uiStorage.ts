@@ -1,7 +1,5 @@
 type UIState = {
   selectedTeamIndex: number
-  activeFilter: 'all' | 'have' | 'missing' | 'duplicate'
-  stickerQuery: string
 }
 
 const UI_KEY = 'album2026-ui'

@@ -35,18 +35,6 @@ export function renderAppShell(container: HTMLElement): void {
     </section>
 
     <section class="section">
-      <input
-        id="stickerSearch"
-        type="search"
-        placeholder="Buscar..."
-      />
-      <div id="stickerFilters">
-        <button data-filter="all">Todas</button>
-        <button data-filter="have">Tenho</button>
-        <button data-filter="missing">Faltam</button>
-        <button data-filter="duplicate">Repetidas</button>
-      </div>
-
       <p id="stickerResults"></p>
 
       <div id="stickerMatrix" class="sticker-matrix"></div>

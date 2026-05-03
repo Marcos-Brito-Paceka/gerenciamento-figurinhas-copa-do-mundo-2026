@@ -37,14 +37,10 @@ export function createApp(): void {
   let lastChangedStickerNumber = "";
 
   state.selectedTeamIndex = savedUI.selectedTeamIndex ?? 0
-  state.activeFilter = savedUI.activeFilter ?? 'all'
-  state.stickerQuery = savedUI.stickerQuery ?? ''
 
   function persistUI(): void {
     saveUIState({
       selectedTeamIndex: state.selectedTeamIndex,
-      activeFilter: state.activeFilter,
-      stickerQuery: state.stickerQuery,
     })
   }
 
@@ -108,13 +104,11 @@ export function createApp(): void {
   renderAppShell(app);
 
   const albumSummary = getElement<HTMLDivElement>("#albumSummary");
-  const stickerSearch = getElement<HTMLInputElement>("#stickerSearch");
   const teamSearch = getElement<HTMLInputElement>("#teamSearch");
   const matrix = getElement<HTMLDivElement>("#teamMatrix");
   const stickerMatrix = getElement<HTMLDivElement>("#stickerMatrix");
   const teamHeader = getElement<HTMLDivElement>("#teamHeader");
   const stickerResults = getElement<HTMLParagraphElement>("#stickerResults");
-  const stickerFilters = getElement<HTMLDivElement>("#stickerFilters");
   const settingsButton = getElement<HTMLButtonElement>("#settingsButton");
   const settingsModal = getElement<HTMLDivElement>("#settingsModal");
   const closeSettings = getElement<HTMLButtonElement>("#closeSettings");
@@ -122,18 +116,6 @@ export function createApp(): void {
   const exportJson = getElement<HTMLButtonElement>("#exportJson");
   const importJson = getElement<HTMLButtonElement>("#importJson");
   const importJsonFile = getElement<HTMLInputElement>("#importJsonFile");
-
-  function updateFilterUI(): void {
-    const buttons = document.querySelectorAll<HTMLButtonElement>(
-      "#stickerFilters button",
-    );
-
-    buttons.forEach((button) => {
-      const filter = button.getAttribute("data-filter");
-
-      button.classList.toggle("active", filter === state.activeFilter);
-    });
-  }
 
   function updateAlbumSummary(): void {
     renderAlbumSummary(albumSummary, state.albumTeams);
@@ -157,29 +139,13 @@ export function createApp(): void {
     renderTeamHeader(teamHeader, selectedTeam);
     renderTeams(matrix, visibleTeams, {
       selectedTeamId: selectedTeam.id,
-      showAllTeams: state.showAllTeams || state.teamQuery.trim().length > 0,
     });
 
-    const normalizedQuery = state.stickerQuery.trim().toLowerCase();
-
-    const stickers = selectedTeam.stickers.filter((sticker) => {
-      const matchesFilter =
-        state.activeFilter === "all" || sticker.status === state.activeFilter;
-
-      const matchesSearch =
-        !normalizedQuery ||
-        `${sticker.number} ${sticker.name} ${sticker.type}`
-          .toLowerCase()
-          .includes(normalizedQuery);
-
-      return matchesFilter && matchesSearch;
-    });
-
-    stickerResults.textContent = `Mostrando ${stickers.length} de ${selectedTeam.stickers.length} figurinhas`;
+    stickerResults.textContent = `${selectedTeam.stickers.length} figurinhas`;
 
     renderStickers(stickerMatrix, {
       ...selectedTeam,
-      stickers,
+      stickers: selectedTeam.stickers,
     }, lastChangedStickerNumber);
   lastChangedStickerNumber = "";
   }
@@ -207,8 +173,6 @@ export function createApp(): void {
     updateSelectedTeam(state.selectedTeamIndex);
     updateProgress();
     updateAlbumSummary();
-    updateFilterUI();
-    stickerSearch.value = state.stickerQuery;
   }
 
   function getVisibleTeams() {
@@ -228,9 +192,7 @@ export function createApp(): void {
   function renderCurrentState(): void {
     updateSelectedTeam(state.selectedTeamIndex);
     updateAlbumSummary();
-    updateFilterUI();
     updateProgress();
-    stickerSearch.value = state.stickerQuery;
   }
 
   function buildBackupJson(): string {
@@ -241,8 +203,6 @@ export function createApp(): void {
         preferences,
         ui: {
           selectedTeamIndex: state.selectedTeamIndex,
-          activeFilter: state.activeFilter,
-          stickerQuery: state.stickerQuery,
         },
         progress: state.albumTeams.map((team) => ({
           id: team.id,
@@ -327,8 +287,6 @@ export function createApp(): void {
         if (payload.ui) {
           const ui = payload.ui as Partial<{
             selectedTeamIndex: number;
-            activeFilter: typeof state.activeFilter;
-            stickerQuery: string;
           }>;
 
           if (
@@ -339,18 +297,6 @@ export function createApp(): void {
             state.selectedTeamIndex = ui.selectedTeamIndex;
           }
 
-          if (
-            ui.activeFilter === "all" ||
-            ui.activeFilter === "have" ||
-            ui.activeFilter === "missing" ||
-            ui.activeFilter === "duplicate"
-          ) {
-            state.activeFilter = ui.activeFilter;
-          }
-
-          if (typeof ui.stickerQuery === "string") {
-            state.stickerQuery = ui.stickerQuery;
-          }
         }
 
         saveProgress(state.albumTeams);
@@ -376,9 +322,7 @@ export function createApp(): void {
   applyPreferences();
   updateSelectedTeam(state.selectedTeamIndex);
   updateAlbumSummary();
-  updateFilterUI();
   updateProgress();
-  stickerSearch.value = state.stickerQuery;
 
   settingsButton.addEventListener("click", openSettings);
   closeSettings.addEventListener("click", closeSettingsModal);
@@ -441,8 +385,6 @@ export function createApp(): void {
   bindAppEvents({
     matrix,
     stickerMatrix,
-    stickerFilters,
-    stickerSearch,
     albumTeams: state.albumTeams,
     toggleStickerStatus,
 
@@ -450,23 +392,6 @@ export function createApp(): void {
     setSelectedTeamIndex: (index) => {
       state.selectedTeamIndex = index;
       persistUI()
-    },
-
-    getActiveFilter: () => state.activeFilter,
-    setActiveFilter: (filter) => {
-      state.activeFilter = filter;
-      updateFilterUI();
-      persistUI();
-    },
-
-    setStickerQuery: (query) => {
-      state.stickerQuery = query;
-      persistUI();
-    },
-
-    toggleShowAllTeams: () => {
-      state.showAllTeams = !state.showAllTeams;
-      updateSelectedTeam(state.selectedTeamIndex);
     },
 
     teamSearch,

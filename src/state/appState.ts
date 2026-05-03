@@ -13,9 +13,6 @@ export const defaultPreferences: AppPreferences = {
 export type AppState = {
   albumTeams: Team[]
   selectedTeamIndex: number
-  activeFilter: 'all' | 'have' | 'missing' | 'duplicate'
-  stickerQuery: string
-  showAllTeams: boolean
   teamQuery: string
 }
 
@@ -23,9 +20,6 @@ export function createAppState(teams: Team[]): AppState {
   return {
     albumTeams: teams,
     selectedTeamIndex: 0,
-    activeFilter: 'all',
-    stickerQuery: '',
-    showAllTeams: false,
     teamQuery: '',
   }
 }

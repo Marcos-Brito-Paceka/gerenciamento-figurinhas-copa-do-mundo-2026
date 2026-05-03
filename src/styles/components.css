@@ -121,8 +121,51 @@
 
 .team-matrix {
   display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 100%;
+  gap: 12px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+  padding-bottom: 8px;
+}
+
+.team-matrix::-webkit-scrollbar {
+  height: 6px;
+}
+
+.team-matrix::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.team-matrix::-webkit-scrollbar-thumb {
+  border-radius: var(--radius-pill);
+  background: var(--line-strong);
+}
+
+.team-page {
+  min-width: 0;
+  display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(58px, 1fr));
   gap: 8px;
+  scroll-snap-align: start;
+}
+
+.team-empty {
+  grid-column: 1;
+  min-height: 88px;
+  padding: 18px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-lg);
+  display: grid;
+  place-items: center;
+  background: rgba(255, 253, 248, 0.62);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
 }
 
 .team-cell {
@@ -249,53 +292,6 @@
   border-radius: inherit;
   background: var(--ink);
   transition: width 360ms cubic-bezier(.2, .8, .2, 1);
-}
-
-#stickerSearch {
-  width: 100%;
-  min-height: 46px;
-  padding: 0 13px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-pill);
-  background: var(--surface);
-  color: var(--ink);
-  font-size: 15px;
-  font-weight: 700;
-}
-
-#stickerSearch::placeholder {
-  color: var(--quiet);
-}
-
-#stickerFilters {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
-  margin: 12px 0;
-}
-
-#stickerFilters button {
-  min-height: 36px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-pill);
-  background: var(--surface);
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 860;
-  transition:
-    background 140ms ease,
-    border-color 140ms ease,
-    color 140ms ease;
-}
-
-#stickerFilters button.active {
-  border-color: var(--ink);
-  background: linear-gradient(
-    180deg,
-    rgba(21, 21, 21, 0.08),
-    rgba(21, 21, 21, 0.02)
-  );
-  color: var(--ink);
 }
 
 .sticker-matrix {
@@ -431,23 +427,6 @@
   aspect-ratio: 3 / 2;
   background-size: cover;
   border: 1px solid rgba(0,0,0,0.1); /* Para bandeiras brancas não sumirem */
-}
-
-.team-toggle {
-  grid-column: 1 / -1;
-  width: 100%;
-  min-height: 42px;
-  margin-top: 10px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-pill);
-  background: var(--surface);
-  color: var(--ink);
-  font-size: 13px;
-  font-weight: 900;
-}
-
-.team-toggle:active {
-  transform: scale(0.98);
 }
 
 #teamSearch {
