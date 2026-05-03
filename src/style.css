@@ -294,3 +294,17 @@ code {
     border-right-color: var(--border);
   }
 }
+
+.sticker-cell[data-status='missing'] {
+  background: #f0ede4;
+}
+
+.sticker-cell[data-status='have'] {
+  background: #145c43;
+  color: white;
+}
+
+.sticker-cell[data-status='duplicate'] {
+  background: #2f5f7c;
+  color: white;
+}

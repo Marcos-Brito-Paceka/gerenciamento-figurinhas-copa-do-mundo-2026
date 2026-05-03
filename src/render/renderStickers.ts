@@ -1,4 +1,10 @@
-import type { Team } from "../types/album";
+import type { Team } from '../types/album'
+
+const statusLabel = {
+  missing: 'Faltando',
+  have: 'Tenho',
+  duplicate: 'Repetida',
+}
 
 export function renderStickers(container: HTMLElement, team: Team): void {
   container.innerHTML = team.stickers
@@ -11,7 +17,9 @@ export function renderStickers(container: HTMLElement, team: Team): void {
         >
           <strong>${sticker.number}</strong>
           <span>${sticker.name}</span>
+          <small>${statusLabel[sticker.status]}</small>
         </button>
       `,
-    ).join("");
+    )
+    .join('')
 }

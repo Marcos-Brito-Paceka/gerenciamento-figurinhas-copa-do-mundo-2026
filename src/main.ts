@@ -5,6 +5,7 @@ import { loadProgress, saveProgress } from './services/storage'
 import { getAllStickers, getProgressPercent } from './utils/albumStats'
 import { renderTeams } from './render/renderTeams'
 import { renderStickers } from './render/renderStickers'
+import { getNextStatus } from './utils/stickerStatus'
 
 const app = document.querySelector<HTMLDivElement>('#app')
 
@@ -77,4 +78,23 @@ document.querySelector('#save-test')?.addEventListener('click', () => {
   albumTeams[0].stickers[0].status = 'have'
   saveProgress(albumTeams)
   location.reload()
+})
+
+stickerMatrix.addEventListener('click', (event) => {
+  const target = event.target as HTMLElement
+  const stickerButton = target.closest('[data-sticker]')
+
+  if (!stickerButton) return
+
+  const stickerNumber = stickerButton.getAttribute('data-sticker')
+  const team = albumTeams[selectedTeamIndex]
+
+  const sticker = team.stickers.find((item) => item.number === stickerNumber)
+
+  if (!sticker) return
+
+  sticker.status = getNextStatus(sticker.status)
+
+  saveProgress(albumTeams)
+  updateSelectedTeam(selectedTeamIndex)
 })
