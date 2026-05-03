@@ -1,0 +1,58 @@
+const FLAG_CDN_BASE_URL = "https://flagcdn.com";
+
+const flagSvgCodes: Record<string, string> = {
+  MEX: "mx",
+  RSA: "za",
+  KOR: "kr",
+  CZE: "cz",
+  CAN: "ca",
+  QAT: "qa",
+  BIH: "ba",
+  SUI: "ch",
+  USA: "us",
+  PAR: "py",
+  AUS: "au",
+  TUR: "tr",
+  BRA: "br",
+  MAR: "ma",
+  HAI: "ht",
+  SCO: "gb-sct",
+  GER: "de",
+  CIV: "ci",
+  CUW: "cw",
+  ECU: "ec",
+  NED: "nl",
+  JPN: "jp",
+  TUN: "tn",
+  SWE: "se",
+  BEL: "be",
+  EGY: "eg",
+  IRN: "ir",
+  NZL: "nz",
+  ESP: "es",
+  CPV: "cv",
+  KSA: "sa",
+  URU: "uy",
+  FRA: "fr",
+  SEN: "sn",
+  IRQ: "iq",
+  NOR: "no",
+  ARG: "ar",
+  ALG: "dz",
+  AUT: "at",
+  JOR: "jo",
+  POR: "pt",
+  COD: "cd",
+  UZB: "uz",
+  COL: "co",
+  ENG: "gb-eng",
+  CRO: "hr",
+  GHA: "gh",
+  PAN: "pa",
+};
+
+export function getFlagSvgUrl(teamCode: string): string | null {
+  const svgCode = flagSvgCodes[teamCode];
+
+  return svgCode ? `${FLAG_CDN_BASE_URL}/${svgCode}.svg` : null;
+}

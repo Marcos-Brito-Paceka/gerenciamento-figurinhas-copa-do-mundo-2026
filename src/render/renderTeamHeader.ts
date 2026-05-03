@@ -7,6 +7,8 @@ export function renderTeamHeader(
 ): void {
   const owned = countOwned(team.stickers)
   const progress = getProgressPercent(team.stickers)
+  const previousFill = container.querySelector<HTMLElement>('.team-progress div')
+  const previousWidth = previousFill?.style.width || '0%'
 
   container.innerHTML = `
     <article class="team-header">
@@ -19,8 +21,16 @@ export function renderTeamHeader(
       <strong>${team.code}</strong>
 
       <div class="team-progress">
-        <div style="width: ${progress}%"></div>
+        <div style="width: ${previousWidth}"></div>
       </div>
     </article>
   `
+
+  const nextFill = container.querySelector<HTMLElement>('.team-progress div')
+
+  requestAnimationFrame(() => {
+    if (nextFill) {
+      nextFill.style.width = `${progress}%`
+    }
+  })
 }

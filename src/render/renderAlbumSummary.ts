@@ -12,11 +12,13 @@ export function renderAlbumSummary(
 ): void {
   const stickers = getAllStickers(teams)
   const completion = getProgressPercent(stickers)
+  const previousRing = container.querySelector<HTMLElement>('.ring')
+  const previousAngle = previousRing?.style.getPropertyValue('--angle') || '0deg'
 
   container.innerHTML = `
     <section class="summary" aria-label="Resumo do álbum">
       <div class="dial">
-        <div class="ring" style="--angle: ${completion * 3.6}deg">
+        <div class="ring" style="--angle: ${previousAngle}">
           <span>${completion}%</span>
         </div>
       </div>
@@ -44,4 +46,20 @@ export function renderAlbumSummary(
       </div>
    </section>
   `
+
+  const ring = container.querySelector<HTMLElement>('.ring')
+  const counters = container.querySelectorAll<HTMLElement>('.counter')
+
+  requestAnimationFrame(() => {
+    if (ring) {
+      ring.style.setProperty('--angle', `${completion * 3.6}deg`)
+      ring.classList.remove('pulse')
+      requestAnimationFrame(() => ring.classList.add('pulse'))
+    }
+
+    counters.forEach((counter) => {
+      counter.classList.remove('bump')
+      requestAnimationFrame(() => counter.classList.add('bump'))
+    })
+  })
 }
