@@ -265,3 +265,20 @@
   background-size: cover;
   border: 1px solid rgba(0,0,0,0.1); /* Para bandeiras brancas não sumirem */
 }
+
+.team-toggle {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-height: 42px;
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.team-toggle:active {
+  transform: scale(0.98);
+}

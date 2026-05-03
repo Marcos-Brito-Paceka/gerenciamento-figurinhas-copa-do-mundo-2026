@@ -15,11 +15,20 @@ type BindAppEventsParams = {
   updateProgress: () => void;
   updateAlbumSummary: () => void;
   toggleStickerStatus: (stickerNumber: string) => void;
+  toggleShowAllTeams: () => void;
 };
 
 export function bindAppEvents(params: BindAppEventsParams): void {
   params.matrix.addEventListener("click", (event) => {
     const target = event.target as HTMLElement;
+
+    const toggleButton = target.closest("[data-team-toggle]");
+
+    if (toggleButton) {
+      params.toggleShowAllTeams();
+      return;
+    }
+
     const teamButton = target.closest("[data-team]");
 
     if (!teamButton) return;

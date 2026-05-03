@@ -86,7 +86,10 @@ export function createApp(): void {
     const selectedTeam = state.albumTeams[state.selectedTeamIndex];
 
     renderTeamHeader(teamHeader, selectedTeam);
-    renderTeams(matrix, state.albumTeams, selectedTeam.id);
+    renderTeams(matrix, state.albumTeams, {
+      selectedTeamId: selectedTeam.id,
+      showAllTeams: state.showAllTeams,
+    });
 
     const normalizedQuery = state.stickerQuery.trim().toLowerCase();
 
@@ -158,6 +161,11 @@ export function createApp(): void {
     setStickerQuery: (query) => {
       state.stickerQuery = query;
       persistUI();
+    },
+
+    toggleShowAllTeams: () => {
+      state.showAllTeams = !state.showAllTeams;
+      updateSelectedTeam(state.selectedTeamIndex);
     },
 
     updateSelectedTeam,
