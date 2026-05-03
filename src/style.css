@@ -345,3 +345,24 @@ code {
   background: #151515;
   border-radius: inherit;
 }
+
+/* STICKER FILTERS */
+
+#stickerFilters {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+#stickerFilters button {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  background: white;
+  cursor: pointer;
+}
+
+#stickerFilters button.active {
+  background: #151515;
+  color: white;
+  border-color: #151515;
+}

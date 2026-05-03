@@ -27,7 +27,24 @@ function getStickers() {
   return getAllStickers(albumTeams);
 }
 
-let activeFilter: 'all' | 'have' | 'missing' | 'duplicate' = 'all'
+let activeFilter: "all" | "have" | "missing" | "duplicate" = "all";
+let stickerQuery = "";
+
+function updateFilterUI(): void {
+  const buttons = document.querySelectorAll<HTMLButtonElement>(
+    "#stickerFilters button",
+  );
+
+  buttons.forEach((button) => {
+    const filter = button.getAttribute("data-filter");
+
+    if (filter === activeFilter) {
+      button.classList.add("active");
+    } else {
+      button.classList.remove("active");
+    }
+  });
+}
 
 app.innerHTML = `
   <h1>Álbum 2026</h1>
@@ -45,6 +62,12 @@ app.innerHTML = `
     <div id="teamHeader"></div>
   </section>
 
+  <input
+  id="stickerSearch"
+  type="search"
+  placeholder="Buscar por número, nome ou tipo"
+  />
+
   <div id="stickerFilters">
     <button data-filter="all">Todas</button>
     <button data-filter="have">Tenho</button>
@@ -58,12 +81,12 @@ app.innerHTML = `
   </section>
 `;
 
-const albumSummary = getElement<HTMLDivElement>('#albumSummary')
+const albumSummary = getElement<HTMLDivElement>("#albumSummary");
+const stickerSearch = getElement<HTMLInputElement>('#stickerSearch')
 
 function updateAlbumSummary(): void {
-  renderAlbumSummary(albumSummary, albumTeams)
+  renderAlbumSummary(albumSummary, albumTeams);
 }
-
 
 const matrix = getElement<HTMLDivElement>("#teamMatrix");
 const stickerMatrix = getElement<HTMLDivElement>("#stickerMatrix");
@@ -75,43 +98,56 @@ function updateSelectedTeam(index: number): void {
   const selectedTeam = albumTeams[selectedTeamIndex];
 
   renderTeamHeader(teamHeader, selectedTeam);
-  const stickers =
-  activeFilter === 'all'
-    ? selectedTeam.stickers
-    : selectedTeam.stickers.filter((sticker) => sticker.status === activeFilter)
 
-renderStickers(stickerMatrix, {
-  ...selectedTeam,
-  stickers,
-});
+  const normalizedQuery = stickerQuery.trim().toLowerCase();
+
+  const stickers = selectedTeam.stickers.filter((sticker) => {
+    const matchesFilter =
+      activeFilter === "all" || sticker.status === activeFilter;
+
+    const matchesSearch =
+      !normalizedQuery ||
+      `${sticker.number} ${sticker.name} ${sticker.type}`
+        .toLowerCase()
+        .includes(normalizedQuery);
+
+    return matchesFilter && matchesSearch;
+  });
+
+  renderStickers(stickerMatrix, {
+    ...selectedTeam,
+    stickers,
+  });
 }
 
-const stickerFilters = getElement<HTMLDivElement>('#stickerFilters')
+const stickerFilters = getElement<HTMLDivElement>("#stickerFilters");
 
-stickerFilters.addEventListener('click', (event) => {
-  const target = event.target as HTMLElement
-  const filterButton = target.closest('[data-filter]')
+stickerFilters.addEventListener("click", (event) => {
+  const target = event.target as HTMLElement;
+  const filterButton = target.closest("[data-filter]");
 
-  if (!filterButton) return
+  if (!filterButton) return;
 
-  const filter = filterButton.getAttribute('data-filter')
+  const filter = filterButton.getAttribute("data-filter");
 
   if (
-    filter !== 'all' &&
-    filter !== 'have' &&
-    filter !== 'missing' &&
-    filter !== 'duplicate'
+    filter !== "all" &&
+    filter !== "have" &&
+    filter !== "missing" &&
+    filter !== "duplicate"
   ) {
-    return
+    return;
   }
 
-  activeFilter = filter
-  updateSelectedTeam(selectedTeamIndex)
-})
+  activeFilter = filter;
+  updateSelectedTeam(selectedTeamIndex);
+  updateFilterUI();
+});
 
 renderTeams(matrix, albumTeams);
 updateSelectedTeam(0);
 updateAlbumSummary();
+updateFilterUI();
 
 matrix.addEventListener("click", (event) => {
   const target = event.target as HTMLElement;
@@ -157,3 +193,10 @@ stickerMatrix.addEventListener("click", (event) => {
   updateProgress();
   updateAlbumSummary();
 });
+
+stickerSearch.addEventListener('input', (event) => {
+  const target = event.target as HTMLInputElement
+
+  stickerQuery = target.value
+  updateSelectedTeam(selectedTeamIndex)
+})
