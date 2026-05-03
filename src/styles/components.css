@@ -1,0 +1,267 @@
+.album-summary,
+.team-header {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.album-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 10px;
+}
+
+.album-summary h2,
+.album-summary p {
+  grid-column: 1 / -1;
+  padding: 14px 14px 0;
+}
+
+.album-summary > div {
+  min-height: 60px;
+  padding: 11px;
+  border-top: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+}
+
+.album-summary > div:nth-child(2n + 1) {
+  border-right: 0;
+}
+
+.album-summary strong {
+  display: block;
+  color: var(--ink);
+  font-size: 19px;
+  line-height: 1;
+}
+
+.album-summary span {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 760;
+}
+
+.team-matrix {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.team-cell {
+  min-height: 48px;
+  aspect-ratio: auto;
+  font-size: 12px;
+  font-weight: 950;
+
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  color: var(--ink);
+  transition:
+    transform 160ms ease,
+    background 160ms ease,
+    color 160ms ease,
+    border-color 160ms ease;
+}
+
+.team-cell.active {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--surface);
+  box-shadow: 0 8px 18px rgba(21, 21, 21, 0.18);
+}
+
+.team-cell:active {
+  transform: scale(0.94);
+}
+
+.team-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  padding: 16px;
+  background:
+    radial-gradient(circle at 92% 18%, rgba(22, 155, 98, 0.24), transparent 34%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.74), rgba(37, 74, 165, 0.13));
+}
+
+.team-header span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 820;
+  text-transform: uppercase;
+}
+
+.team-header h2 {
+  margin-top: 3px;
+  font-size: 26px;
+  line-height: 0.98;
+}
+
+.team-header strong {
+  min-width: 54px;
+  height: 54px;
+  border: 1px solid var(--ink);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--accent);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.team-progress {
+  grid-column: 1 / -1;
+  height: 7px;
+  margin-top: 4px;
+  border-radius: var(--radius-pill);
+  background: #e5e1d6;
+  overflow: hidden;
+}
+
+.team-progress div {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ink);
+}
+
+#stickerSearch {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+#stickerSearch::placeholder {
+  color: var(--quiet);
+}
+
+#stickerFilters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin: 12px 0;
+}
+
+#stickerFilters button {
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 860;
+}
+
+#stickerFilters button.active {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--surface);
+}
+
+.sticker-matrix {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+
+.sticker-cell {
+  min-height: 76px;
+  padding: 7px 5px;
+  aspect-ratio: auto;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  display: grid;
+  align-content: space-between;
+  justify-items: center;
+  background: #f0ede4;
+  text-align: center;
+  overflow: hidden;
+  transition:
+    transform 160ms ease,
+    background 160ms ease,
+    color 160ms ease,
+    border-color 160ms ease;
+}
+
+.sticker-cell:active {
+  transform: scale(0.94);
+}
+
+.sticker-cell strong {
+  width: 100%;
+  font-size: 9px;
+  font-weight: 920;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sticker-cell span {
+  width: 100%;
+  font-size: 8px;
+  font-weight: 820;
+  line-height: 1.05;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sticker-cell small {
+  font-size: 8px;
+  font-weight: 900;
+}
+
+.sticker-cell[data-status="missing"] {
+  color: var(--ink);
+  background: #f0ede4;
+}
+
+.sticker-cell[data-status="have"] {
+  color: var(--surface);
+  background: var(--have);
+  border-color: var(--have);
+}
+
+.sticker-cell[data-status="duplicate"] {
+  color: var(--surface);
+  background: var(--duplicate);
+  border-color: var(--duplicate);
+}
+
+.team-cell {
+  min-height: 58px;
+  display: grid;
+  place-items: center;
+  gap: 5px;
+}
+
+.team-flag {
+  width: 28px;
+  height: 18px;
+  border: 1px solid rgba(21, 21, 21, 0.16);
+  border-radius: 5px;
+  background: var(--flag);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
+.team-cell.active .team-flag {
+  border-color: rgba(255, 253, 248, 0.4);
+}
+
+.flag {
+  aspect-ratio: 3 / 2;
+  background-size: cover;
+  border: 1px solid rgba(0,0,0,0.1); /* Para bandeiras brancas não sumirem */
+}

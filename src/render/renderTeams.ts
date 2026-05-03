@@ -1,4 +1,6 @@
-import type { Team } from '../types/album'
+import type { Team } from "../types/album";
+import { flagStyles } from "../data/flagStyles.ts";
+
 
 export function renderTeams(
   container: HTMLElement,
@@ -6,17 +8,19 @@ export function renderTeams(
   selectedTeamId: string,
 ): void {
   container.innerHTML = teams
-    .map(
-      (team) => `
-        <button 
-          class="team-cell ${
-            team.id === selectedTeamId ? 'active' : ''
-          }"
+    .map((team) => {
+      const flag = flagStyles[team.code] ?? "linear-gradient(135deg, #e9e4d8, #fffdf8)";
+
+      return `
+        <button
+          class="team-cell ${team.id === selectedTeamId ? "active" : ""}"
           data-team="${team.id}"
+          style="--flag: ${flag}"
         >
-          ${team.code}
+          <span class="team-flag" aria-hidden="true"></span>
+          <span>${team.code}</span>
         </button>
-      `,
-    )
-    .join('')
+      `;
+    })
+    .join("");
 }

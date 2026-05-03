@@ -36,9 +36,11 @@
 }
 
 body {
-  min-width: 320px;
+  width: 100%;
+  min-width: 0;
   min-height: 100svh;
   margin: 0;
+  overflow-x: clip;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.72), transparent 280px),
     var(--bg);
@@ -81,11 +83,15 @@ h2 {
 }
 
 #app {
+  width: 100%;
+  max-width: 100%;
   min-height: 100svh;
+  overflow-x: clip;
 }
 
 .app {
-  width: min(100%, 420px);
+  width: 100%;
+  max-width: 420px;
   margin: 0 auto;
   padding: 16px;
 }
@@ -103,6 +109,8 @@ h2 {
 }
 
 .section {
+  min-width: 0;
+  max-width: 100%;
   margin-bottom: 20px;
 }
 
@@ -166,6 +174,7 @@ h2 {
 .sticker-matrix {
   display: grid;
   gap: 8px;
+  max-width: 100%;
 }
 
 .team-matrix {
@@ -173,7 +182,7 @@ h2 {
 }
 
 .sticker-matrix {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
 }
 
 .team-cell,
@@ -347,7 +356,7 @@ h2 {
 
 @media (min-width: 768px) {
   .app {
-    width: min(100%, 1100px);
+    max-width: 1100px;
     padding: 32px;
   }
 

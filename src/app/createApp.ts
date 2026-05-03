@@ -1,4 +1,4 @@
-import "../style.css";
+import "../styles/main.css";
 import { teams } from "../data/team.ts";
 import { loadProgress, saveProgress } from "../services/storage";
 import { getAllStickers, getProgressPercent } from "../utils/albumStats";
@@ -10,6 +10,7 @@ import { renderAlbumSummary } from "../render/renderAlbumSummary";
 import { renderAppShell } from "../render/renderAppShell";
 import { bindAppEvents } from "../events/bindAppEvents";
 import { createAppState } from "../state/appState";
+import { loadUIState, saveUIState } from '../services/uiStorage';
 
 function getElement<T extends HTMLElement>(selector: string): T {
   const element = document.querySelector<T>(selector);
@@ -25,6 +26,20 @@ export function createApp(): void {
   const app = getElement<HTMLDivElement>("#app");
 
   const state = createAppState(loadProgress(teams));
+  const savedUI = loadUIState()
+
+  state.selectedTeamIndex = savedUI.selectedTeamIndex ?? 0
+  state.activeFilter = savedUI.activeFilter ?? 'all'
+  state.stickerQuery = savedUI.stickerQuery ?? ''
+
+  function persistUI(): void {
+    saveUIState({
+      selectedTeamIndex: state.selectedTeamIndex,
+      activeFilter: state.activeFilter,
+      stickerQuery: state.stickerQuery,
+    })
+  }
+
 
   function getStickers() {
     return getAllStickers(state.albumTeams);
@@ -109,12 +124,15 @@ export function createApp(): void {
     updateSelectedTeam(state.selectedTeamIndex);
     updateProgress();
     updateAlbumSummary();
+    updateFilterUI();
+    stickerSearch.value = state.stickerQuery;
   }
 
-  updateSelectedTeam(0);
+  updateSelectedTeam(state.selectedTeamIndex);
   updateAlbumSummary();
   updateFilterUI();
   updateProgress();
+  stickerSearch.value = state.stickerQuery;
 
   bindAppEvents({
     matrix,
@@ -127,16 +145,19 @@ export function createApp(): void {
     getSelectedTeamIndex: () => state.selectedTeamIndex,
     setSelectedTeamIndex: (index) => {
       state.selectedTeamIndex = index;
+      persistUI()
     },
 
     getActiveFilter: () => state.activeFilter,
     setActiveFilter: (filter) => {
       state.activeFilter = filter;
       updateFilterUI();
+      persistUI();
     },
 
     setStickerQuery: (query) => {
       state.stickerQuery = query;
+      persistUI();
     },
 
     updateSelectedTeam,
