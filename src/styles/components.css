@@ -5,6 +5,31 @@
   overflow: hidden;
 }
 
+.settings-button {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  color: var(--ink);
+  transition:
+    transform 160ms ease,
+    background 180ms ease,
+    border-color 180ms ease;
+}
+
+.settings-button:active {
+  transform: scale(0.94);
+}
+
+.settings-button svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2.1;
+}
+
 .summary {
   display: grid;
   grid-template-columns: 120px 1fr;
@@ -446,4 +471,133 @@
     border-color 160ms ease,
     box-shadow 160ms ease,
     background 160ms ease;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  padding: 18px;
+  display: grid;
+  place-items: center;
+  background: rgba(21, 21, 21, 0.38);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 180ms ease,
+    backdrop-filter 180ms ease;
+}
+
+.modal-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+  backdrop-filter: blur(5px);
+}
+
+.settings-modal {
+  width: min(100%, 420px);
+  max-height: min(720px, calc(100svh - 36px));
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 26px;
+  background: var(--surface);
+  color: var(--ink);
+  overflow: auto;
+  box-shadow: 0 26px 70px rgba(21, 21, 21, 0.28);
+  transform: translateY(10px) scale(0.98);
+  transition: transform 220ms ease;
+}
+
+.modal-backdrop.open .settings-modal {
+  transform: translateY(0) scale(1);
+}
+
+.kicker {
+  margin: 0 0 3px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 820;
+  text-transform: uppercase;
+}
+
+.settings-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.setting-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface-soft);
+}
+
+.setting-row strong {
+  display: block;
+  font-size: 14px;
+  line-height: 1.1;
+}
+
+.setting-row span {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.segmented,
+.backup-actions,
+.modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.segmented button,
+.ghost,
+.solid {
+  min-height: 38px;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 900;
+  transition:
+    transform 140ms ease,
+    background 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
+}
+
+.segmented button.active,
+.solid {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--surface);
+}
+
+.segmented button:active,
+.ghost:active,
+.solid:active {
+  transform: scale(0.97);
+}
+
+.modal-actions {
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+@media (min-width: 520px) {
+  .setting-row {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
 }

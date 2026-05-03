@@ -13,6 +13,8 @@
 
 .header {
   display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
   gap: 4px;
   padding: 8px 2px 14px;
 }

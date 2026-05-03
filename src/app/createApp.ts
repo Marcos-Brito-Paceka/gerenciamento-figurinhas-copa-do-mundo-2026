@@ -1,6 +1,11 @@
 import "../styles/main.css";
 import { teams } from "../data/team.ts";
-import { loadProgress, saveProgress } from "../services/storage";
+import {
+  loadPreferences,
+  loadProgress,
+  savePreferences,
+  saveProgress,
+} from "../services/storage";
 import { getAllStickers, getProgressPercent } from "../utils/albumStats";
 import { renderTeams } from "../render/renderTeams";
 import { renderStickers } from "../render/renderStickers";
@@ -9,9 +14,10 @@ import { renderTeamHeader } from "../render/renderTeamHeader";
 import { renderAlbumSummary } from "../render/renderAlbumSummary";
 import { renderAppShell } from "../render/renderAppShell";
 import { bindAppEvents } from "../events/bindAppEvents";
-import { createAppState } from "../state/appState";
+import { createAppState, defaultPreferences } from "../state/appState";
 import { loadUIState, saveUIState } from '../services/uiStorage';
 import { playTapSound } from "../services/audioFeedback";
+import type { AppPreferences, StickerStatus } from "../types/album";
 
 function getElement<T extends HTMLElement>(selector: string): T {
   const element = document.querySelector<T>(selector);
@@ -27,6 +33,7 @@ export function createApp(): void {
   const app = getElement<HTMLDivElement>("#app");
   const state = createAppState(loadProgress(teams));
   const savedUI = loadUIState();
+  let preferences = loadPreferences();
   let lastChangedStickerNumber = "";
 
   state.selectedTeamIndex = savedUI.selectedTeamIndex ?? 0
@@ -39,6 +46,58 @@ export function createApp(): void {
       activeFilter: state.activeFilter,
       stickerQuery: state.stickerQuery,
     })
+  }
+
+  function persistPreferences(): void {
+    savePreferences(preferences);
+  }
+
+  function applyPreferences(): void {
+    document.documentElement.dataset.motion = preferences.motion;
+    updateSettingsUI();
+  }
+
+  function updateSettingsUI(): void {
+    document.querySelectorAll<HTMLButtonElement>("[data-motion-option]").forEach((button) => {
+      button.classList.toggle(
+        "active",
+        button.dataset.motionOption === preferences.motion,
+      );
+    });
+
+    document.querySelectorAll<HTMLButtonElement>("[data-sound-option]").forEach((button) => {
+      button.classList.toggle(
+        "active",
+        button.dataset.soundOption === preferences.sound,
+      );
+    });
+
+    document.querySelectorAll<HTMLButtonElement>("[data-vibration-option]").forEach((button) => {
+      button.classList.toggle(
+        "active",
+        button.dataset.vibrationOption === preferences.vibration,
+      );
+    });
+
+    document.querySelectorAll<HTMLButtonElement>("[data-cycle-option]").forEach((button) => {
+      button.classList.toggle(
+        "active",
+        button.dataset.cycleOption === preferences.statusCycle,
+      );
+    });
+  }
+
+  function updatePreference<Key extends keyof AppPreferences>(
+    key: Key,
+    value: AppPreferences[Key],
+  ): void {
+    preferences = {
+      ...preferences,
+      [key]: value,
+    };
+
+    persistPreferences();
+    applyPreferences();
   }
 
 
@@ -56,6 +115,13 @@ export function createApp(): void {
   const teamHeader = getElement<HTMLDivElement>("#teamHeader");
   const stickerResults = getElement<HTMLParagraphElement>("#stickerResults");
   const stickerFilters = getElement<HTMLDivElement>("#stickerFilters");
+  const settingsButton = getElement<HTMLButtonElement>("#settingsButton");
+  const settingsModal = getElement<HTMLDivElement>("#settingsModal");
+  const closeSettings = getElement<HTMLButtonElement>("#closeSettings");
+  const resetSettings = getElement<HTMLButtonElement>("#resetSettings");
+  const exportJson = getElement<HTMLButtonElement>("#exportJson");
+  const importJson = getElement<HTMLButtonElement>("#importJson");
+  const importJsonFile = getElement<HTMLInputElement>("#importJsonFile");
 
   function updateFilterUI(): void {
     const buttons = document.querySelectorAll<HTMLButtonElement>(
@@ -125,9 +191,16 @@ export function createApp(): void {
 
     if (!sticker) return;
 
-    sticker.status = getNextStatus(sticker.status);
-    playTapSound();
-    navigator.vibrate?.(10);
+    sticker.status = getNextStatus(sticker.status, preferences.statusCycle);
+
+    if (preferences.sound === "on") {
+      playTapSound();
+    }
+
+    if (preferences.vibration === "on") {
+      navigator.vibrate?.(10);
+    }
+
     lastChangedStickerNumber = stickerNumber;
 
     saveProgress(state.albumTeams);
@@ -148,11 +221,222 @@ export function createApp(): void {
     );
   }
 
+  function isStickerStatus(value: unknown): value is StickerStatus {
+    return value === "missing" || value === "have" || value === "duplicate";
+  }
+
+  function renderCurrentState(): void {
+    updateSelectedTeam(state.selectedTeamIndex);
+    updateAlbumSummary();
+    updateFilterUI();
+    updateProgress();
+    stickerSearch.value = state.stickerQuery;
+  }
+
+  function buildBackupJson(): string {
+    return JSON.stringify(
+      {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        preferences,
+        ui: {
+          selectedTeamIndex: state.selectedTeamIndex,
+          activeFilter: state.activeFilter,
+          stickerQuery: state.stickerQuery,
+        },
+        progress: state.albumTeams.map((team) => ({
+          id: team.id,
+          stickers: team.stickers.map((sticker) => ({
+            number: sticker.number,
+            status: sticker.status,
+          })),
+        })),
+      },
+      null,
+      2,
+    );
+  }
+
+  function downloadJson(filename: string, content: string): void {
+    const blob = new Blob([content], { type: "application/json;charset=utf-8" });
+    const link = document.createElement("a");
+
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.style.display = "none";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+  }
+
+  function exportBackupJson(): void {
+    const date = new Date().toISOString().slice(0, 10);
+
+    downloadJson(`album2026-backup-${date}.json`, buildBackupJson());
+  }
+
+  function importBackupJson(file: File): void {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      try {
+        const payload = JSON.parse(String(reader.result));
+
+        if (payload.preferences) {
+          preferences = {
+            ...preferences,
+            ...payload.preferences,
+          };
+          persistPreferences();
+          applyPreferences();
+        }
+
+        if (Array.isArray(payload.progress)) {
+          payload.progress.forEach((savedTeam: unknown) => {
+            if (!savedTeam || typeof savedTeam !== "object") return;
+
+            const teamPayload = savedTeam as {
+              id?: unknown;
+              stickers?: unknown;
+            };
+            const team = state.albumTeams.find(
+              (item) => item.id === teamPayload.id,
+            );
+
+            if (!team || !Array.isArray(teamPayload.stickers)) return;
+
+            teamPayload.stickers.forEach((savedSticker: unknown) => {
+              if (!savedSticker || typeof savedSticker !== "object") return;
+
+              const stickerPayload = savedSticker as {
+                number?: unknown;
+                status?: unknown;
+              };
+              const sticker = team.stickers.find(
+                (item) => item.number === stickerPayload.number,
+              );
+
+              if (sticker && isStickerStatus(stickerPayload.status)) {
+                sticker.status = stickerPayload.status;
+              }
+            });
+          });
+        }
+
+        if (payload.ui) {
+          const ui = payload.ui as Partial<{
+            selectedTeamIndex: number;
+            activeFilter: typeof state.activeFilter;
+            stickerQuery: string;
+          }>;
+
+          if (
+            typeof ui.selectedTeamIndex === "number" &&
+            ui.selectedTeamIndex >= 0 &&
+            ui.selectedTeamIndex < state.albumTeams.length
+          ) {
+            state.selectedTeamIndex = ui.selectedTeamIndex;
+          }
+
+          if (
+            ui.activeFilter === "all" ||
+            ui.activeFilter === "have" ||
+            ui.activeFilter === "missing" ||
+            ui.activeFilter === "duplicate"
+          ) {
+            state.activeFilter = ui.activeFilter;
+          }
+
+          if (typeof ui.stickerQuery === "string") {
+            state.stickerQuery = ui.stickerQuery;
+          }
+        }
+
+        saveProgress(state.albumTeams);
+        persistUI();
+        renderCurrentState();
+        settingsModal.classList.remove("open");
+      } catch {
+        window.alert("Não foi possível importar este JSON.");
+      }
+    };
+
+    reader.readAsText(file, "UTF-8");
+  }
+
+  function openSettings(): void {
+    settingsModal.classList.add("open");
+  }
+
+  function closeSettingsModal(): void {
+    settingsModal.classList.remove("open");
+  }
+
+  applyPreferences();
   updateSelectedTeam(state.selectedTeamIndex);
   updateAlbumSummary();
   updateFilterUI();
   updateProgress();
   stickerSearch.value = state.stickerQuery;
+
+  settingsButton.addEventListener("click", openSettings);
+  closeSettings.addEventListener("click", closeSettingsModal);
+  settingsModal.addEventListener("click", (event) => {
+    if (event.target === settingsModal) {
+      closeSettingsModal();
+    }
+  });
+
+  resetSettings.addEventListener("click", () => {
+    preferences = { ...defaultPreferences };
+    persistPreferences();
+    applyPreferences();
+  });
+
+  exportJson.addEventListener("click", exportBackupJson);
+  importJson.addEventListener("click", () => importJsonFile.click());
+  importJsonFile.addEventListener("change", () => {
+    const file = importJsonFile.files?.[0];
+
+    if (file) {
+      importBackupJson(file);
+    }
+
+    importJsonFile.value = "";
+  });
+
+  settingsModal.addEventListener("click", (event) => {
+    const target = event.target as HTMLElement;
+    const motionOption = target.closest<HTMLButtonElement>("[data-motion-option]");
+    const soundOption = target.closest<HTMLButtonElement>("[data-sound-option]");
+    const vibrationOption = target.closest<HTMLButtonElement>(
+      "[data-vibration-option]",
+    );
+    const cycleOption = target.closest<HTMLButtonElement>("[data-cycle-option]");
+
+    if (motionOption?.dataset.motionOption === "full" || motionOption?.dataset.motionOption === "light") {
+      updatePreference("motion", motionOption.dataset.motionOption);
+      return;
+    }
+
+    if (soundOption?.dataset.soundOption === "on" || soundOption?.dataset.soundOption === "off") {
+      updatePreference("sound", soundOption.dataset.soundOption);
+      return;
+    }
+
+    if (
+      vibrationOption?.dataset.vibrationOption === "on" ||
+      vibrationOption?.dataset.vibrationOption === "off"
+    ) {
+      updatePreference("vibration", vibrationOption.dataset.vibrationOption);
+      return;
+    }
+
+    if (cycleOption?.dataset.cycleOption === "full" || cycleOption?.dataset.cycleOption === "simple") {
+      updatePreference("statusCycle", cycleOption.dataset.cycleOption);
+    }
+  });
 
   bindAppEvents({
     matrix,
