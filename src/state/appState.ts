@@ -16,6 +16,7 @@ export type AppState = {
   activeFilter: 'all' | 'have' | 'missing' | 'duplicate'
   stickerQuery: string
   showAllTeams: boolean
+  teamQuery: string
 }
 
 export function createAppState(teams: Team[]): AppState {
@@ -25,5 +26,6 @@ export function createAppState(teams: Team[]): AppState {
     activeFilter: 'all',
     stickerQuery: '',
     showAllTeams: false,
+    teamQuery: '',
   }
 }

@@ -49,6 +49,7 @@ export function createApp(): void {
 
   const albumSummary = getElement<HTMLDivElement>("#albumSummary");
   const stickerSearch = getElement<HTMLInputElement>("#stickerSearch");
+  const teamSearch = getElement<HTMLInputElement>("#teamSearch");
   const matrix = getElement<HTMLDivElement>("#teamMatrix");
   const stickerMatrix = getElement<HTMLDivElement>("#stickerMatrix");
   const teamHeader = getElement<HTMLDivElement>("#teamHeader");
@@ -82,13 +83,14 @@ export function createApp(): void {
 
   function updateSelectedTeam(index: number): void {
     state.selectedTeamIndex = index;
-
     const selectedTeam = state.albumTeams[state.selectedTeamIndex];
+    const visibleTeams = getVisibleTeams();
+
 
     renderTeamHeader(teamHeader, selectedTeam);
-    renderTeams(matrix, state.albumTeams, {
+    renderTeams(matrix, visibleTeams, {
       selectedTeamId: selectedTeam.id,
-      showAllTeams: state.showAllTeams,
+      showAllTeams: state.showAllTeams || state.teamQuery.trim().length > 0,
     });
 
     const normalizedQuery = state.stickerQuery.trim().toLowerCase();
@@ -131,6 +133,16 @@ export function createApp(): void {
     stickerSearch.value = state.stickerQuery;
   }
 
+  function getVisibleTeams() {
+    const query = state.teamQuery.trim().toLowerCase();
+
+    if (!query) return state.albumTeams;
+
+    return state.albumTeams.filter((team) =>
+      `${team.name} ${team.code}`.toLowerCase().includes(query),
+    );
+  }
+
   updateSelectedTeam(state.selectedTeamIndex);
   updateAlbumSummary();
   updateFilterUI();
@@ -167,6 +179,12 @@ export function createApp(): void {
       state.showAllTeams = !state.showAllTeams;
       updateSelectedTeam(state.selectedTeamIndex);
     },
+
+    teamSearch,
+    setTeamQuery: (query) => {
+      state.teamQuery = query;
+    },
+    getVisibleTeams,
 
     updateSelectedTeam,
     updateProgress,

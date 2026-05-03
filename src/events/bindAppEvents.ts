@@ -6,6 +6,7 @@ type BindAppEventsParams = {
   stickerFilters: HTMLElement;
   stickerSearch: HTMLInputElement;
   albumTeams: Team[];
+  teamSearch: HTMLInputElement;
   getSelectedTeamIndex: () => number;
   setSelectedTeamIndex: (index: number) => void;
   getActiveFilter: () => "all" | "have" | "missing" | "duplicate";
@@ -16,6 +17,8 @@ type BindAppEventsParams = {
   updateAlbumSummary: () => void;
   toggleStickerStatus: (stickerNumber: string) => void;
   toggleShowAllTeams: () => void;
+  getVisibleTeams: () => Team[];
+  setTeamQuery: (query: string) => void;
 };
 
 export function bindAppEvents(params: BindAppEventsParams): void {
@@ -86,5 +89,12 @@ export function bindAppEvents(params: BindAppEventsParams): void {
     if (!stickerNumber) return;
 
     params.toggleStickerStatus(stickerNumber);
+  });
+
+  params.teamSearch.addEventListener("input", (event) => {
+    const target = event.target as HTMLInputElement;
+
+    params.setTeamQuery(target.value);
+    params.updateSelectedTeam(params.getSelectedTeamIndex());
   });
 }

@@ -8,9 +8,14 @@ export function renderAppShell(container: HTMLElement): void {
 
   <aside class="sidebar">
     <div id="albumSummary"></div>
-
     <section class="section">
+      
       <h2>Seleções</h2>
+        <input
+         id="teamSearch"
+         type="search"
+         placeholder="Buscar seleção por nome ou sigla"
+         />
       <div id="teamMatrix" class="team-matrix"></div>
     </section>
   </aside>
