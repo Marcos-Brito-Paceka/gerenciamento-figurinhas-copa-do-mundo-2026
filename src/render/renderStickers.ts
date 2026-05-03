@@ -11,7 +11,7 @@ export function renderStickers(container: HTMLElement, team: Team): void {
     .map(
       (sticker) => `
         <button 
-          class="sticker-cell"
+          class="sticker-cell sticker-cell--${sticker.status}"
           data-sticker="${sticker.number}"
           data-status="${sticker.status}"
         >

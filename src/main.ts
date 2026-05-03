@@ -1,204 +1,217 @@
-import "./style.css";
-import { teams } from "./data/team.ts";
-import { loadProgress, saveProgress } from "./services/storage";
-import { getAllStickers, getProgressPercent } from "./utils/albumStats";
-import { renderTeams } from "./render/renderTeams";
-import { renderStickers } from "./render/renderStickers";
-import { getNextStatus } from "./utils/stickerStatus";
-import { renderTeamHeader } from "./render/renderTeamHeader";
-import { renderAlbumSummary } from "./render/renderAlbumSummary";
+// import "./style.css";
+// import { teams } from "./data/team.ts";
+// import { loadProgress, saveProgress } from "./services/storage";
+// import { getAllStickers, getProgressPercent } from "./utils/albumStats";
+// import { renderTeams } from "./render/renderTeams";
+// import { renderStickers } from "./render/renderStickers";
+// import { getNextStatus } from "./utils/stickerStatus";
+// import { renderTeamHeader } from "./render/renderTeamHeader";
+// import { renderAlbumSummary } from "./render/renderAlbumSummary";
 
-function getElement<T extends HTMLElement>(selector: string): T {
-  const element = document.querySelector<T>(selector);
+// function getElement<T extends HTMLElement>(selector: string): T {
+//   const element = document.querySelector<T>(selector);
 
-  if (!element) {
-    throw new Error(`Elemento ${selector} não encontrado`);
-  }
+//   if (!element) {
+//     throw new Error(`Elemento ${selector} não encontrado`);
+//   }
 
-  return element;
-}
+//   return element;
+// }
 
-const app = getElement<HTMLDivElement>("#app");
+// const app = getElement<HTMLDivElement>("#app");
 
-const albumTeams = loadProgress(teams);
-let selectedTeamIndex = 0;
+// const albumTeams = loadProgress(teams);
+// let selectedTeamIndex = 0;
 
-function getStickers() {
-  return getAllStickers(albumTeams);
-}
+// function getStickers() {
+//   return getAllStickers(albumTeams);
+// }
 
-let activeFilter: "all" | "have" | "missing" | "duplicate" = "all";
-let stickerQuery = "";
+// let activeFilter: "all" | "have" | "missing" | "duplicate" = "all";
+// let stickerQuery = "";
 
-function updateFilterUI(): void {
-  const buttons = document.querySelectorAll<HTMLButtonElement>(
-    "#stickerFilters button",
-  );
+// function updateFilterUI(): void {
+//   const buttons = document.querySelectorAll<HTMLButtonElement>(
+//     "#stickerFilters button",
+//   );
 
-  buttons.forEach((button) => {
-    const filter = button.getAttribute("data-filter");
+//   buttons.forEach((button) => {
+//     const filter = button.getAttribute("data-filter");
 
-    if (filter === activeFilter) {
-      button.classList.add("active");
-    } else {
-      button.classList.remove("active");
-    }
-  });
-}
+//     if (filter === activeFilter) {
+//       button.classList.add("active");
+//     } else {
+//       button.classList.remove("active");
+//     }
+//   });
+// }
 
-app.innerHTML = `
-  <div class="app">
-  <header class="header">
-    <h1>Álbum 2026</h1>
-    <p id="progressText">Progresso: ...</p>
-  </header>
+// app.innerHTML = `
+//   <div class="app">
+//   <header class="header">
+//     <h1>Álbum 2026</h1>
+//     <p id="progressText">Progresso: ...</p>
+//   </header>
 
-  <div id="albumSummary"></div>
+//   <aside class="sidebar">
+//     <div id="albumSummary"></div>
 
-  <section class="section">
-    <h2>Seleções</h2>
-    <div id="teamMatrix" class="team-matrix"></div>
-  </section>
+//     <section class="section">
+//       <h2>Seleções</h2>
+//       <div id="teamMatrix" class="team-matrix"></div>
+//     </section>
+//   </aside>
 
-  <section class="section">
-    <div id="teamHeader"></div>
-  </section>
+//   <main class="content">
+//     <section class="section">
+//       <div id="teamHeader"></div>
+//     </section>
 
-  <section class="section">
-    <input
-      id="stickerSearch"
-      type="search"
-      placeholder="Buscar..."
-    />
+//     <section class="section">
+//       <input
+//         id="stickerSearch"
+//         type="search"
+//         placeholder="Buscar..."
+//       />
 
-    <div id="stickerFilters"></div>
+//       <div id="stickerFilters"></div>
 
-    <p id="stickerResults"></p>
+//       <p id="stickerResults"></p>
 
-    <div id="stickerMatrix" class="sticker-matrix"></div>
-  </section>
-</div>
-`;
+//       <div id="stickerMatrix" class="sticker-matrix"></div>
+//     </section>
+//   </main>
+// </div>
+// `;
 
-const albumSummary = getElement<HTMLDivElement>("#albumSummary");
-const stickerSearch = getElement<HTMLInputElement>('#stickerSearch')
+// const albumSummary = getElement<HTMLDivElement>("#albumSummary");
+// const stickerSearch = getElement<HTMLInputElement>('#stickerSearch')
 
-function updateAlbumSummary(): void {
-  renderAlbumSummary(albumSummary, albumTeams);
-}
+// function updateAlbumSummary(): void {
+//   renderAlbumSummary(albumSummary, albumTeams);
+// }
 
-const matrix = getElement<HTMLDivElement>("#teamMatrix");
-const stickerMatrix = getElement<HTMLDivElement>("#stickerMatrix");
-const teamHeader = getElement<HTMLDivElement>("#teamHeader");
-const stickerResults = getElement<HTMLParagraphElement>("#stickerResults");
+// const matrix = getElement<HTMLDivElement>("#teamMatrix");
+// const stickerMatrix = getElement<HTMLDivElement>("#stickerMatrix");
+// const teamHeader = getElement<HTMLDivElement>("#teamHeader");
+// const stickerResults = getElement<HTMLParagraphElement>("#stickerResults");
 
-function updateSelectedTeam(index: number): void {
-  selectedTeamIndex = index;
+// function updateSelectedTeam(index: number): void {
+//   selectedTeamIndex = index;
 
-  const selectedTeam = albumTeams[selectedTeamIndex];
+//   const selectedTeam = albumTeams[selectedTeamIndex];
 
-  renderTeamHeader(teamHeader, selectedTeam);
+//   renderTeamHeader(teamHeader, selectedTeam);
 
-  const normalizedQuery = stickerQuery.trim().toLowerCase();
+//   renderTeams(matrix, albumTeams, selectedTeam.id);
 
-  const stickers = selectedTeam.stickers.filter((sticker) => {
-    const matchesFilter =
-      activeFilter === "all" || sticker.status === activeFilter;
+//   const normalizedQuery = stickerQuery.trim().toLowerCase();
 
-    const matchesSearch =
-      !normalizedQuery ||
-      `${sticker.number} ${sticker.name} ${sticker.type}`
-        .toLowerCase()
-        .includes(normalizedQuery);
+//   const stickers = selectedTeam.stickers.filter((sticker) => {
+//     const matchesFilter =
+//       activeFilter === "all" || sticker.status === activeFilter;
 
-    return matchesFilter && matchesSearch;
-  });
+//     const matchesSearch =
+//       !normalizedQuery ||
+//       `${sticker.number} ${sticker.name} ${sticker.type}`
+//         .toLowerCase()
+//         .includes(normalizedQuery);
 
-  stickerResults.textContent = `Mostrando ${stickers.length} de ${selectedTeam.stickers.length} figurinhas`;
+//     return matchesFilter && matchesSearch;
+//   });
 
-  renderStickers(stickerMatrix, {
-    ...selectedTeam,
-    stickers,
-  });
-}
+  
+//   stickerResults.textContent = `Mostrando ${stickers.length} de ${selectedTeam.stickers.length} figurinhas`;
 
-const stickerFilters = getElement<HTMLDivElement>("#stickerFilters");
+//   renderStickers(stickerMatrix, {
+//     ...selectedTeam,
+//     stickers,
+//   });
+// }
 
-stickerFilters.addEventListener("click", (event) => {
-  const target = event.target as HTMLElement;
-  const filterButton = target.closest("[data-filter]");
+// const stickerFilters = getElement<HTMLDivElement>("#stickerFilters");
 
-  if (!filterButton) return;
+// stickerFilters.addEventListener("click", (event) => {
+//   const target = event.target as HTMLElement;
+//   const filterButton = target.closest("[data-filter]");
 
-  const filter = filterButton.getAttribute("data-filter");
+//   if (!filterButton) return;
 
-  if (
-    filter !== "all" &&
-    filter !== "have" &&
-    filter !== "missing" &&
-    filter !== "duplicate"
-  ) {
-    return;
-  }
+//   const filter = filterButton.getAttribute("data-filter");
 
-  activeFilter = filter;
-  updateSelectedTeam(selectedTeamIndex);
-  updateFilterUI();
-});
+//   if (
+//     filter !== "all" &&
+//     filter !== "have" &&
+//     filter !== "missing" &&
+//     filter !== "duplicate"
+//   ) {
+//     return;
+//   }
 
-renderTeams(matrix, albumTeams);
-updateSelectedTeam(0);
-updateAlbumSummary();
-updateFilterUI();
+//   activeFilter = filter;
+//   updateSelectedTeam(selectedTeamIndex);
+//   updateFilterUI();
+// });
 
-matrix.addEventListener("click", (event) => {
-  const target = event.target as HTMLElement;
-  const teamButton = target.closest("[data-team]");
+// renderTeams(matrix, albumTeams, albumTeams[selectedTeamIndex].id);
+// updateSelectedTeam(0);
+// updateAlbumSummary();
+// updateFilterUI();
 
-  if (!teamButton) return;
+// matrix.addEventListener("click", (event) => {
+//   const target = event.target as HTMLElement;
+//   const teamButton = target.closest("[data-team]");
 
-  const teamId = teamButton.getAttribute("data-team");
+//   if (!teamButton) return;
 
-  const index = albumTeams.findIndex((team) => team.id === teamId);
+//   const teamId = teamButton.getAttribute("data-team");
 
-  if (index !== -1) {
-    updateSelectedTeam(index);
-  }
-});
+//   const index = albumTeams.findIndex((team) => team.id === teamId);
 
-function updateProgress(): void {
-  const progressText =
-    document.querySelector<HTMLParagraphElement>("#progressText");
+//   if (index !== -1) {
+//     updateSelectedTeam(index);
+//   }
+// });
 
-  if (!progressText) return;
+// function updateProgress(): void {
+//   const progressText =
+//     document.querySelector<HTMLParagraphElement>("#progressText");
 
-  progressText.textContent = `Progresso salvo: ${getProgressPercent(getStickers())}%`;
-}
+//   if (!progressText) return;
 
-stickerMatrix.addEventListener("click", (event) => {
-  const target = event.target as HTMLElement;
-  const stickerButton = target.closest("[data-sticker]");
+//   progressText.textContent = `Progresso salvo: ${getProgressPercent(getStickers())}%`;
+// }
 
-  if (!stickerButton) return;
+// stickerMatrix.addEventListener("click", (event) => {
+//   const target = event.target as HTMLElement;
+//   const stickerButton = target.closest("[data-sticker]");
 
-  const stickerNumber = stickerButton.getAttribute("data-sticker");
-  const team = albumTeams[selectedTeamIndex];
+//   if (!stickerButton) return;
 
-  const sticker = team.stickers.find((item) => item.number === stickerNumber);
+//   const stickerNumber = stickerButton.getAttribute("data-sticker");
+//   const team = albumTeams[selectedTeamIndex];
 
-  if (!sticker) return;
+//   const sticker = team.stickers.find((item) => item.number === stickerNumber);
 
-  sticker.status = getNextStatus(sticker.status);
+//   if (!sticker) return;
 
-  saveProgress(albumTeams);
-  updateSelectedTeam(selectedTeamIndex);
-  updateProgress();
-  updateAlbumSummary();
-});
+//   sticker.status = getNextStatus(sticker.status);
 
-stickerSearch.addEventListener('input', (event) => {
-  const target = event.target as HTMLInputElement
+//   saveProgress(albumTeams);
+//   updateSelectedTeam(selectedTeamIndex);
+//   updateProgress();
+//   updateAlbumSummary();
+// });
 
-  stickerQuery = target.value
-  updateSelectedTeam(selectedTeamIndex)
-})
+// stickerSearch.addEventListener('input', (event) => {
+//   const target = event.target as HTMLInputElement
+
+//   stickerQuery = target.value
+//   updateSelectedTeam(selectedTeamIndex)
+// })
+
+
+import './style.css'
+import { createApp } from './app/createApp'
+
+createApp()
