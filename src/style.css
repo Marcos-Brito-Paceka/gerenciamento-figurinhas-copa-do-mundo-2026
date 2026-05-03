@@ -366,3 +366,56 @@ code {
   color: white;
   border-color: #151515;
 }
+
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #f5f4ef;
+}
+
+.app {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.header {
+  margin-bottom: 16px;
+}
+
+.section {
+  margin-bottom: 20px;
+}
+
+/* GRID DAS SELECOES */
+
+.team-matrix {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.team-cell {
+  padding: 12px;
+  border: 1px solid #ccc;
+  background: white;
+  cursor: pointer;
+}
+
+/* GRID DAS FIGURINHAS */
+
+.sticker-matrix {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.sticker-cell {
+  padding: 10px;
+  border: 1px solid #ccc;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}

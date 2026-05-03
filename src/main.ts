@@ -47,38 +47,37 @@ function updateFilterUI(): void {
 }
 
 app.innerHTML = `
-  <h1>Álbum 2026</h1>
-  <p id="progressText">Progresso salvo: ${getProgressPercent(getStickers())}%</p>
+  <div class="app">
+  <header class="header">
+    <h1>Álbum 2026</h1>
+    <p id="progressText">Progresso: ...</p>
+  </header>
 
   <div id="albumSummary"></div>
 
-  <section>
+  <section class="section">
     <h2>Seleções</h2>
-    <div id="teamMatrix"></div>
+    <div id="teamMatrix" class="team-matrix"></div>
   </section>
 
-  <section>
-    <h2>Seleção ativa</h2>
+  <section class="section">
     <div id="teamHeader"></div>
   </section>
 
-  <input
-  id="stickerSearch"
-  type="search"
-  placeholder="Buscar por número, nome ou tipo"
-  />
+  <section class="section">
+    <input
+      id="stickerSearch"
+      type="search"
+      placeholder="Buscar..."
+    />
 
-  <div id="stickerFilters">
-    <button data-filter="all">Todas</button>
-    <button data-filter="have">Tenho</button>
-    <button data-filter="missing">Faltam</button>
-    <button data-filter="duplicate">Repetidas</button>
-  </div>
+    <div id="stickerFilters"></div>
 
-  <section>
-    <h2>Figurinhas</h2>
-    <div id="stickerMatrix"></div>
+    <p id="stickerResults"></p>
+
+    <div id="stickerMatrix" class="sticker-matrix"></div>
   </section>
+</div>
 `;
 
 const albumSummary = getElement<HTMLDivElement>("#albumSummary");
@@ -91,6 +90,7 @@ function updateAlbumSummary(): void {
 const matrix = getElement<HTMLDivElement>("#teamMatrix");
 const stickerMatrix = getElement<HTMLDivElement>("#stickerMatrix");
 const teamHeader = getElement<HTMLDivElement>("#teamHeader");
+const stickerResults = getElement<HTMLParagraphElement>("#stickerResults");
 
 function updateSelectedTeam(index: number): void {
   selectedTeamIndex = index;
@@ -113,6 +113,8 @@ function updateSelectedTeam(index: number): void {
 
     return matchesFilter && matchesSearch;
   });
+
+  stickerResults.textContent = `Mostrando ${stickers.length} de ${selectedTeam.stickers.length} figurinhas`;
 
   renderStickers(stickerMatrix, {
     ...selectedTeam,
