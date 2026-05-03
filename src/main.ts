@@ -1,39 +1,39 @@
-import './style.css'
-
-import { teams } from './data/team.ts'
-import { loadProgress, saveProgress } from './services/storage'
-import { getAllStickers, getProgressPercent } from './utils/albumStats'
-import { renderTeams } from './render/renderTeams'
-import { renderStickers } from './render/renderStickers'
-import { getNextStatus } from './utils/stickerStatus'
+import "./style.css";
+import { teams } from "./data/team.ts";
+import { loadProgress, saveProgress } from "./services/storage";
+import { getAllStickers, getProgressPercent } from "./utils/albumStats";
+import { renderTeams } from "./render/renderTeams";
+import { renderStickers } from "./render/renderStickers";
+import { getNextStatus } from "./utils/stickerStatus";
+import { renderTeamHeader } from "./render/renderTeamHeader";
+import { renderAlbumSummary } from "./render/renderAlbumSummary";
 
 function getElement<T extends HTMLElement>(selector: string): T {
-  const element = document.querySelector<T>(selector)
+  const element = document.querySelector<T>(selector);
 
   if (!element) {
-    throw new Error(`Elemento ${selector} não encontrado`)
+    throw new Error(`Elemento ${selector} não encontrado`);
   }
 
-  return element
+  return element;
 }
 
-const app = getElement<HTMLDivElement>('#app')
+const app = getElement<HTMLDivElement>("#app");
 
-if (!app) {
-  throw new Error('Elemento #app não encontrado')
-}
-
-const albumTeams = loadProgress(teams)
-let selectedTeamIndex = 0
+const albumTeams = loadProgress(teams);
+let selectedTeamIndex = 0;
 
 function getStickers() {
-  return getAllStickers(albumTeams)
+  return getAllStickers(albumTeams);
 }
+
+let activeFilter: 'all' | 'have' | 'missing' | 'duplicate' = 'all'
 
 app.innerHTML = `
   <h1>Álbum 2026</h1>
   <p id="progressText">Progresso salvo: ${getProgressPercent(getStickers())}%</p>
-  <button id="save-test">Salvar teste</button>
+
+  <div id="albumSummary"></div>
 
   <section>
     <h2>Seleções</h2>
@@ -41,71 +41,119 @@ app.innerHTML = `
   </section>
 
   <section>
+    <h2>Seleção ativa</h2>
+    <div id="teamHeader"></div>
+  </section>
+
+  <div id="stickerFilters">
+    <button data-filter="all">Todas</button>
+    <button data-filter="have">Tenho</button>
+    <button data-filter="missing">Faltam</button>
+    <button data-filter="duplicate">Repetidas</button>
+  </div>
+
+  <section>
     <h2>Figurinhas</h2>
     <div id="stickerMatrix"></div>
   </section>
-`
+`;
 
-const matrix = getElement<HTMLDivElement>('#teamMatrix')
-const stickerMatrix = getElement<HTMLDivElement>('#stickerMatrix')
+const albumSummary = getElement<HTMLDivElement>('#albumSummary')
+
+function updateAlbumSummary(): void {
+  renderAlbumSummary(albumSummary, albumTeams)
+}
+
+
+const matrix = getElement<HTMLDivElement>("#teamMatrix");
+const stickerMatrix = getElement<HTMLDivElement>("#stickerMatrix");
+const teamHeader = getElement<HTMLDivElement>("#teamHeader");
 
 function updateSelectedTeam(index: number): void {
-  selectedTeamIndex = index
+  selectedTeamIndex = index;
 
-  const selectedTeam = albumTeams[selectedTeamIndex]
+  const selectedTeam = albumTeams[selectedTeamIndex];
 
-  renderStickers(stickerMatrix, selectedTeam)
+  renderTeamHeader(teamHeader, selectedTeam);
+  const stickers =
+  activeFilter === 'all'
+    ? selectedTeam.stickers
+    : selectedTeam.stickers.filter((sticker) => sticker.status === activeFilter)
+
+renderStickers(stickerMatrix, {
+  ...selectedTeam,
+  stickers,
+});
 }
 
-renderTeams(matrix, albumTeams)
-updateSelectedTeam(0)
+const stickerFilters = getElement<HTMLDivElement>('#stickerFilters')
 
-matrix.addEventListener('click', (event) => {
+stickerFilters.addEventListener('click', (event) => {
   const target = event.target as HTMLElement
-  const teamButton = target.closest('[data-team]')
+  const filterButton = target.closest('[data-filter]')
 
-  if (!teamButton) return
+  if (!filterButton) return
 
-  const teamId = teamButton.getAttribute('data-team')
+  const filter = filterButton.getAttribute('data-filter')
 
-  const index = albumTeams.findIndex((team) => team.id === teamId)
+  if (
+    filter !== 'all' &&
+    filter !== 'have' &&
+    filter !== 'missing' &&
+    filter !== 'duplicate'
+  ) {
+    return
+  }
+
+  activeFilter = filter
+  updateSelectedTeam(selectedTeamIndex)
+})
+
+renderTeams(matrix, albumTeams);
+updateSelectedTeam(0);
+updateAlbumSummary();
+
+matrix.addEventListener("click", (event) => {
+  const target = event.target as HTMLElement;
+  const teamButton = target.closest("[data-team]");
+
+  if (!teamButton) return;
+
+  const teamId = teamButton.getAttribute("data-team");
+
+  const index = albumTeams.findIndex((team) => team.id === teamId);
 
   if (index !== -1) {
-    updateSelectedTeam(index)
+    updateSelectedTeam(index);
   }
-})
-
-document.querySelector('#save-test')?.addEventListener('click', () => {
-  albumTeams[0].stickers[0].status = 'have'
-  saveProgress(albumTeams)
-  location.reload()
-})
+});
 
 function updateProgress(): void {
-  const progressText = document.querySelector<HTMLParagraphElement>('#progressText')
+  const progressText =
+    document.querySelector<HTMLParagraphElement>("#progressText");
 
-  if (!progressText) return
+  if (!progressText) return;
 
-  progressText.textContent = `Progresso salvo: ${getProgressPercent(getStickers())}%`
+  progressText.textContent = `Progresso salvo: ${getProgressPercent(getStickers())}%`;
 }
 
-stickerMatrix.addEventListener('click', (event) => {
-  const target = event.target as HTMLElement
-  const stickerButton = target.closest('[data-sticker]')
+stickerMatrix.addEventListener("click", (event) => {
+  const target = event.target as HTMLElement;
+  const stickerButton = target.closest("[data-sticker]");
 
-  if (!stickerButton) return
+  if (!stickerButton) return;
 
-  const stickerNumber = stickerButton.getAttribute('data-sticker')
-  const team = albumTeams[selectedTeamIndex]
+  const stickerNumber = stickerButton.getAttribute("data-sticker");
+  const team = albumTeams[selectedTeamIndex];
 
-  const sticker = team.stickers.find((item) => item.number === stickerNumber)
+  const sticker = team.stickers.find((item) => item.number === stickerNumber);
 
-  if (!sticker) return
+  if (!sticker) return;
 
-  sticker.status = getNextStatus(sticker.status)
+  sticker.status = getNextStatus(sticker.status);
 
-  saveProgress(albumTeams)
-  updateSelectedTeam(selectedTeamIndex)
-  updateProgress()
-})
-
+  saveProgress(albumTeams);
+  updateSelectedTeam(selectedTeamIndex);
+  updateProgress();
+  updateAlbumSummary();
+});
