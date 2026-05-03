@@ -7,7 +7,17 @@ import { renderTeams } from './render/renderTeams'
 import { renderStickers } from './render/renderStickers'
 import { getNextStatus } from './utils/stickerStatus'
 
-const app = document.querySelector<HTMLDivElement>('#app')
+function getElement<T extends HTMLElement>(selector: string): T {
+  const element = document.querySelector<T>(selector)
+
+  if (!element) {
+    throw new Error(`Elemento ${selector} não encontrado`)
+  }
+
+  return element
+}
+
+const app = getElement<HTMLDivElement>('#app')
 
 if (!app) {
   throw new Error('Elemento #app não encontrado')
@@ -23,7 +33,6 @@ function getStickers() {
 app.innerHTML = `
   <h1>Álbum 2026</h1>
   <p id="progressText">Progresso salvo: ${getProgressPercent(getStickers())}%</p>
-
   <button id="save-test">Salvar teste</button>
 
   <section>
@@ -37,16 +46,8 @@ app.innerHTML = `
   </section>
 `
 
-const matrix = document.querySelector<HTMLDivElement>('#teamMatrix')
-const stickerMatrix = document.querySelector<HTMLDivElement>('#stickerMatrix')
-
-if (!matrix) {
-  throw new Error('Elemento #teamMatrix não encontrado')
-}
-
-if (!stickerMatrix) {
-  throw new Error('Elemento #stickerMatrix não encontrado')
-}
+const matrix = getElement<HTMLDivElement>('#teamMatrix')
+const stickerMatrix = getElement<HTMLDivElement>('#stickerMatrix')
 
 function updateSelectedTeam(index: number): void {
   selectedTeamIndex = index
@@ -80,6 +81,14 @@ document.querySelector('#save-test')?.addEventListener('click', () => {
   location.reload()
 })
 
+function updateProgress(): void {
+  const progressText = document.querySelector<HTMLParagraphElement>('#progressText')
+
+  if (!progressText) return
+
+  progressText.textContent = `Progresso salvo: ${getProgressPercent(getStickers())}%`
+}
+
 stickerMatrix.addEventListener('click', (event) => {
   const target = event.target as HTMLElement
   const stickerButton = target.closest('[data-sticker]')
@@ -97,4 +106,6 @@ stickerMatrix.addEventListener('click', (event) => {
 
   saveProgress(albumTeams)
   updateSelectedTeam(selectedTeamIndex)
+  updateProgress()
 })
+
