@@ -1,4 +1,5 @@
-import type { AppPreferences, AppState } from '../types/album'
+import type { AppPreferences } from '../types/album'
+import type { Team } from '../types/album'
 
 export const defaultPreferences: AppPreferences = {
   motion: 'full',
@@ -9,13 +10,18 @@ export const defaultPreferences: AppPreferences = {
   language: 'pt',
 }
 
-export const appState: AppState = {
-  selectedTeamId: 'brasil',
-  selectedStickerNumber: 'BRA 01',
-  teamQuery: '',
-  stickerQuery: '',
-  activeFilter: 'all',
-  showAllTeams: false,
-  activeView: 'collection',
-  preferences: defaultPreferences,
+export type AppState = {
+  albumTeams: Team[]
+  selectedTeamIndex: number
+  activeFilter: 'all' | 'have' | 'missing' | 'duplicate'
+  stickerQuery: string
+}
+
+export function createAppState(teams: Team[]): AppState {
+  return {
+    albumTeams: teams,
+    selectedTeamIndex: 0,
+    activeFilter: 'all',
+    stickerQuery: '',
+  }
 }

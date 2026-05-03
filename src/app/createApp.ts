@@ -9,6 +9,7 @@ import { renderTeamHeader } from "../render/renderTeamHeader";
 import { renderAlbumSummary } from "../render/renderAlbumSummary";
 import { renderAppShell } from "../render/renderAppShell";
 import { bindAppEvents } from "../events/bindAppEvents";
+import { createAppState } from "../state/appState";
 
 function getElement<T extends HTMLElement>(selector: string): T {
   const element = document.querySelector<T>(selector);
@@ -20,18 +21,24 @@ function getElement<T extends HTMLElement>(selector: string): T {
   return element;
 }
 
-export function createApp() {
+export function createApp(): void {
   const app = getElement<HTMLDivElement>("#app");
 
-  const albumTeams = loadProgress(teams);
-  let selectedTeamIndex = 0;
+  const state = createAppState(loadProgress(teams));
 
   function getStickers() {
-    return getAllStickers(albumTeams);
+    return getAllStickers(state.albumTeams);
   }
 
-  let activeFilter: "all" | "have" | "missing" | "duplicate" = "all";
-  let stickerQuery = "";
+  renderAppShell(app);
+
+  const albumSummary = getElement<HTMLDivElement>("#albumSummary");
+  const stickerSearch = getElement<HTMLInputElement>("#stickerSearch");
+  const matrix = getElement<HTMLDivElement>("#teamMatrix");
+  const stickerMatrix = getElement<HTMLDivElement>("#stickerMatrix");
+  const teamHeader = getElement<HTMLDivElement>("#teamHeader");
+  const stickerResults = getElement<HTMLParagraphElement>("#stickerResults");
+  const stickerFilters = getElement<HTMLDivElement>("#stickerFilters");
 
   function updateFilterUI(): void {
     const buttons = document.querySelectorAll<HTMLButtonElement>(
@@ -41,42 +48,36 @@ export function createApp() {
     buttons.forEach((button) => {
       const filter = button.getAttribute("data-filter");
 
-      if (filter === activeFilter) {
-        button.classList.add("active");
-      } else {
-        button.classList.remove("active");
-      }
+      button.classList.toggle("active", filter === state.activeFilter);
     });
   }
 
-  renderAppShell(app);
-
-  const albumSummary = getElement<HTMLDivElement>("#albumSummary");
-  const stickerSearch = getElement<HTMLInputElement>("#stickerSearch");
-
   function updateAlbumSummary(): void {
-    renderAlbumSummary(albumSummary, albumTeams);
+    renderAlbumSummary(albumSummary, state.albumTeams);
   }
 
-  const matrix = getElement<HTMLDivElement>("#teamMatrix");
-  const stickerMatrix = getElement<HTMLDivElement>("#stickerMatrix");
-  const teamHeader = getElement<HTMLDivElement>("#teamHeader");
-  const stickerResults = getElement<HTMLParagraphElement>("#stickerResults");
+  function updateProgress(): void {
+    const progressText =
+      document.querySelector<HTMLParagraphElement>("#progressText");
+
+    if (!progressText) return;
+
+    progressText.textContent = `Progresso salvo: ${getProgressPercent(getStickers())}%`;
+  }
 
   function updateSelectedTeam(index: number): void {
-    selectedTeamIndex = index;
+    state.selectedTeamIndex = index;
 
-    const selectedTeam = albumTeams[selectedTeamIndex];
+    const selectedTeam = state.albumTeams[state.selectedTeamIndex];
 
     renderTeamHeader(teamHeader, selectedTeam);
+    renderTeams(matrix, state.albumTeams, selectedTeam.id);
 
-    renderTeams(matrix, albumTeams, selectedTeam.id);
-
-    const normalizedQuery = stickerQuery.trim().toLowerCase();
+    const normalizedQuery = state.stickerQuery.trim().toLowerCase();
 
     const stickers = selectedTeam.stickers.filter((sticker) => {
       const matchesFilter =
-        activeFilter === "all" || sticker.status === activeFilter;
+        state.activeFilter === "all" || sticker.status === state.activeFilter;
 
       const matchesSearch =
         !normalizedQuery ||
@@ -95,58 +96,47 @@ export function createApp() {
     });
   }
 
-  const stickerFilters = getElement<HTMLDivElement>("#stickerFilters");
+  function toggleStickerStatus(stickerNumber: string): void {
+    const team = state.albumTeams[state.selectedTeamIndex];
 
-  renderTeams(matrix, albumTeams, albumTeams[selectedTeamIndex].id);
+    const sticker = team.stickers.find((item) => item.number === stickerNumber);
+
+    if (!sticker) return;
+
+    sticker.status = getNextStatus(sticker.status);
+
+    saveProgress(state.albumTeams);
+    updateSelectedTeam(state.selectedTeamIndex);
+    updateProgress();
+    updateAlbumSummary();
+  }
+
   updateSelectedTeam(0);
   updateAlbumSummary();
   updateFilterUI();
   updateProgress();
-
-  function updateProgress(): void {
-    const progressText =
-      document.querySelector<HTMLParagraphElement>("#progressText");
-
-    if (!progressText) return;
-
-    progressText.textContent = `Progresso salvo: ${getProgressPercent(getStickers())}%`;
-  }
-
-  function toggleStickerStatus(stickerNumber: string): void {
-    const team = albumTeams[selectedTeamIndex]
-
-    const sticker = team.stickers.find((item) => item.number === stickerNumber)
-
-    if (!sticker) return
-
-    sticker.status = getNextStatus(sticker.status)
-
-    saveProgress(albumTeams)
-    updateSelectedTeam(selectedTeamIndex)
-    updateProgress()
-    updateAlbumSummary()
-  }
 
   bindAppEvents({
     matrix,
     stickerMatrix,
     stickerFilters,
     stickerSearch,
-    albumTeams,
+    albumTeams: state.albumTeams,
     toggleStickerStatus,
 
-    getSelectedTeamIndex: () => selectedTeamIndex,
+    getSelectedTeamIndex: () => state.selectedTeamIndex,
     setSelectedTeamIndex: (index) => {
-      selectedTeamIndex = index;
+      state.selectedTeamIndex = index;
     },
 
-    getActiveFilter: () => activeFilter,
+    getActiveFilter: () => state.activeFilter,
     setActiveFilter: (filter) => {
-      activeFilter = filter;
+      state.activeFilter = filter;
+      updateFilterUI();
     },
 
     setStickerQuery: (query) => {
-      stickerQuery = query;
+      state.stickerQuery = query;
     },
 
     updateSelectedTeam,

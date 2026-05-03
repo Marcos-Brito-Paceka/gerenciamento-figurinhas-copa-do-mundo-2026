@@ -23,13 +23,13 @@ export type AppPreferences = {
   language: 'pt' | 'en'
 }
 
-export type AppState = {
-  selectedTeamId: string
-  selectedStickerNumber: string
-  teamQuery: string
-  stickerQuery: string
-  activeFilter: StickerStatus | 'all'
-  showAllTeams: boolean
-  activeView: 'collection' | 'dashboard'
-  preferences: AppPreferences
-}
+// export type AppState = {
+//   selectedTeamId: string
+//   selectedStickerNumber: string
+//   teamQuery: string
+//   stickerQuery: string
+//   activeFilter: StickerStatus | 'all'
+//   showAllTeams: boolean
+//   activeView: 'collection' | 'dashboard'
+//   preferences: AppPreferences
+// }
