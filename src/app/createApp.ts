@@ -7,6 +7,7 @@ import { renderStickers } from "../render/renderStickers";
 import { getNextStatus } from "../utils/stickerStatus";
 import { renderTeamHeader } from "../render/renderTeamHeader";
 import { renderAlbumSummary } from "../render/renderAlbumSummary";
+import { renderAppShell } from '../render/renderAppShell'
 
 function getElement<T extends HTMLElement>(selector: string): T {
   const element = document.querySelector<T>(selector);
@@ -47,43 +48,7 @@ export function createApp() {
     });
   }
 
-  app.innerHTML = `
-  <div class="app">
-  <header class="header">
-    <h1>Álbum 2026</h1>
-    <p id="progressText">Progresso: ...</p>
-  </header>
-
-  <aside class="sidebar">
-    <div id="albumSummary"></div>
-
-    <section class="section">
-      <h2>Seleções</h2>
-      <div id="teamMatrix" class="team-matrix"></div>
-    </section>
-  </aside>
-
-  <main class="content">
-    <section class="section">
-      <div id="teamHeader"></div>
-    </section>
-
-    <section class="section">
-      <input
-        id="stickerSearch"
-        type="search"
-        placeholder="Buscar..."
-      />
-
-      <div id="stickerFilters"></div>
-
-      <p id="stickerResults"></p>
-
-      <div id="stickerMatrix" class="sticker-matrix"></div>
-    </section>
-  </main>
-</div>
-`;
+  renderAppShell(app);
 
   const albumSummary = getElement<HTMLDivElement>("#albumSummary");
   const stickerSearch = getElement<HTMLInputElement>("#stickerSearch");
@@ -157,6 +122,7 @@ export function createApp() {
   updateSelectedTeam(0);
   updateAlbumSummary();
   updateFilterUI();
+  updateProgress();
 
   matrix.addEventListener("click", (event) => {
     const target = event.target as HTMLElement;
