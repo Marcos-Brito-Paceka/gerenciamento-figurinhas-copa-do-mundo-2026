@@ -52,3 +52,10 @@ A aplicação permite que usuários:
 
 *Último atualizado: 2 de maio de 2026*
 
+
+## Para rodar o projeto
+
+rm -rf node_modules package-lock.json && npm install
+
+npm run dev
+
