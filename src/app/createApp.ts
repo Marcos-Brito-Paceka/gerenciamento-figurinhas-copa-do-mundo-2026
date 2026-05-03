@@ -112,26 +112,20 @@ export function createApp() {
     progressText.textContent = `Progresso salvo: ${getProgressPercent(getStickers())}%`;
   }
 
-  stickerMatrix.addEventListener("click", (event) => {
-    const target = event.target as HTMLElement;
-    const stickerButton = target.closest("[data-sticker]");
+  function toggleStickerStatus(stickerNumber: string): void {
+    const team = albumTeams[selectedTeamIndex]
 
-    if (!stickerButton) return;
+    const sticker = team.stickers.find((item) => item.number === stickerNumber)
 
-    const stickerNumber = stickerButton.getAttribute("data-sticker");
-    const team = albumTeams[selectedTeamIndex];
+    if (!sticker) return
 
-    const sticker = team.stickers.find((item) => item.number === stickerNumber);
+    sticker.status = getNextStatus(sticker.status)
 
-    if (!sticker) return;
-
-    sticker.status = getNextStatus(sticker.status);
-
-    saveProgress(albumTeams);
-    updateSelectedTeam(selectedTeamIndex);
-    updateProgress();
-    updateAlbumSummary();
-  });
+    saveProgress(albumTeams)
+    updateSelectedTeam(selectedTeamIndex)
+    updateProgress()
+    updateAlbumSummary()
+  }
 
   bindAppEvents({
     matrix,
@@ -139,6 +133,7 @@ export function createApp() {
     stickerFilters,
     stickerSearch,
     albumTeams,
+    toggleStickerStatus,
 
     getSelectedTeamIndex: () => selectedTeamIndex,
     setSelectedTeamIndex: (index) => {

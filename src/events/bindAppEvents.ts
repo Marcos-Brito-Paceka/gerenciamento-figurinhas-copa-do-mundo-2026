@@ -14,6 +14,7 @@ type BindAppEventsParams = {
   updateSelectedTeam: (index: number) => void;
   updateProgress: () => void;
   updateAlbumSummary: () => void;
+  toggleStickerStatus: (stickerNumber: string) => void;
 };
 
 export function bindAppEvents(params: BindAppEventsParams): void {
@@ -71,5 +72,10 @@ export function bindAppEvents(params: BindAppEventsParams): void {
     const sticker = team.stickers.find((item) => item.number === stickerNumber);
 
     if (!sticker) return;
+
+
+    if (!stickerNumber) return;
+
+    params.toggleStickerStatus(stickerNumber);
   });
 }
