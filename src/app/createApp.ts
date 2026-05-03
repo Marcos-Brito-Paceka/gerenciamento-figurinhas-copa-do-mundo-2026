@@ -7,7 +7,8 @@ import { renderStickers } from "../render/renderStickers";
 import { getNextStatus } from "../utils/stickerStatus";
 import { renderTeamHeader } from "../render/renderTeamHeader";
 import { renderAlbumSummary } from "../render/renderAlbumSummary";
-import { renderAppShell } from '../render/renderAppShell'
+import { renderAppShell } from "../render/renderAppShell";
+import { bindAppEvents } from "../events/bindAppEvents";
 
 function getElement<T extends HTMLElement>(selector: string): T {
   const element = document.querySelector<T>(selector);
@@ -96,48 +97,11 @@ export function createApp() {
 
   const stickerFilters = getElement<HTMLDivElement>("#stickerFilters");
 
-  stickerFilters.addEventListener("click", (event) => {
-    const target = event.target as HTMLElement;
-    const filterButton = target.closest("[data-filter]");
-
-    if (!filterButton) return;
-
-    const filter = filterButton.getAttribute("data-filter");
-
-    if (
-      filter !== "all" &&
-      filter !== "have" &&
-      filter !== "missing" &&
-      filter !== "duplicate"
-    ) {
-      return;
-    }
-
-    activeFilter = filter;
-    updateSelectedTeam(selectedTeamIndex);
-    updateFilterUI();
-  });
-
   renderTeams(matrix, albumTeams, albumTeams[selectedTeamIndex].id);
   updateSelectedTeam(0);
   updateAlbumSummary();
   updateFilterUI();
   updateProgress();
-
-  matrix.addEventListener("click", (event) => {
-    const target = event.target as HTMLElement;
-    const teamButton = target.closest("[data-team]");
-
-    if (!teamButton) return;
-
-    const teamId = teamButton.getAttribute("data-team");
-
-    const index = albumTeams.findIndex((team) => team.id === teamId);
-
-    if (index !== -1) {
-      updateSelectedTeam(index);
-    }
-  });
 
   function updateProgress(): void {
     const progressText =
@@ -169,10 +133,29 @@ export function createApp() {
     updateAlbumSummary();
   });
 
-  stickerSearch.addEventListener("input", (event) => {
-    const target = event.target as HTMLInputElement;
+  bindAppEvents({
+    matrix,
+    stickerMatrix,
+    stickerFilters,
+    stickerSearch,
+    albumTeams,
 
-    stickerQuery = target.value;
-    updateSelectedTeam(selectedTeamIndex);
+    getSelectedTeamIndex: () => selectedTeamIndex,
+    setSelectedTeamIndex: (index) => {
+      selectedTeamIndex = index;
+    },
+
+    getActiveFilter: () => activeFilter,
+    setActiveFilter: (filter) => {
+      activeFilter = filter;
+    },
+
+    setStickerQuery: (query) => {
+      stickerQuery = query;
+    },
+
+    updateSelectedTeam,
+    updateProgress,
+    updateAlbumSummary,
   });
 }
