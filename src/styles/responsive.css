@@ -55,10 +55,6 @@
     }
 
     .sticker-matrix {
-        grid-template-columns: repeat(6, minmax(0, 1fr));
-    }
-
-    .sticker-cell {
-        min-height: 86px;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
     }
 }

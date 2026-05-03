@@ -1,9 +1,9 @@
 import type { Team } from "../types/album";
 
-const statusLabel = {
-  missing: "Faltando",
-  have: "Tenho",
-  duplicate: "Repetida",
+const statusSymbol = {
+  missing: ".",
+  have: "✓",
+  duplicate: "×",
 };
 
 export function renderStickers(
@@ -21,9 +21,9 @@ export function renderStickers(
           data-sticker="${sticker.number}"
           data-status="${sticker.status}"
         >
-          <strong>${sticker.number}</strong>
-          <span>${sticker.name}</span>
-          <small>${statusLabel[sticker.status]}</small>
+          <span class="sticker-number">${sticker.number}</span>
+          <span class="sticker-symbol">${statusSymbol[sticker.status]}</span>
+          <span class="sticker-name">${sticker.name}</span>
         </button>
       `,
     )

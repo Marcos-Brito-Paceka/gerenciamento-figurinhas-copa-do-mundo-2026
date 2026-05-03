@@ -1,4 +1,3 @@
-.album-summary,
 .team-header {
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
@@ -6,37 +5,79 @@
   overflow: hidden;
 }
 
-.album-summary {
+.summary {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.dial {
+  min-height: 120px;
+  border: 1px solid var(--line);
+  border-radius: 26px;
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+}
+
+.ring {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: conic-gradient(var(--ink) var(--angle), #e5e1d6 0);
+  transition:
+    background 320ms ease,
+    transform 220ms ease;
+}
+
+.ring span {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.counters {
+  border: 1px solid var(--line);
+  border-radius: 26px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  margin-top: 10px;
+  overflow: hidden;
+  background: var(--surface);
 }
 
-.album-summary h2,
-.album-summary p {
-  grid-column: 1 / -1;
-  padding: 14px 14px 0;
-}
-
-.album-summary > div {
+.counter {
   min-height: 60px;
   padding: 11px;
-  border-top: 1px solid var(--line);
   border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
 }
 
-.album-summary > div:nth-child(2n + 1) {
+.counter:nth-child(2n) {
   border-right: 0;
 }
 
-.album-summary strong {
+.counter:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+.counter strong {
   display: block;
   color: var(--ink);
   font-size: 19px;
   line-height: 1;
+  transition: transform 180ms ease;
 }
 
-.album-summary span {
+.counter span {
   display: block;
   margin-top: 5px;
   color: var(--muted);
@@ -45,6 +86,7 @@
 }
 
 .team-matrix {
+  display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
 }
@@ -191,28 +233,43 @@
 }
 
 .sticker-matrix {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
+  display: grid;
+  padding: 12px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  max-width: 100%;
 }
 
 
 .sticker-cell {
-  min-height: 76px;
-  padding: 7px 5px;
-  aspect-ratio: auto;
+  aspect-ratio: 0.82;
+  min-height: 62px;
+  padding: 6px 4px;
   border: 1px solid var(--line);
   border-radius: 13px;
   display: grid;
   align-content: space-between;
   justify-items: center;
-  background: #f0ede4;
+  background: #f7f3e8;
   text-align: center;
+  position: relative;
   overflow: hidden;
   transition:
-    transform 160ms ease,
-    background 160ms ease,
-    color 160ms ease,
-    border-color 160ms ease;
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    color 180ms ease,
+    outline-color 180ms ease;
+}
+
+.sticker-cell::before {
+  content: "";
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(21, 21, 21, 0.08);
+  position: absolute;
+  top: 24px;
 }
 
 .sticker-cell:active {
@@ -223,28 +280,42 @@
   animation: stickerFlip 420ms ease;
 }
 
-.sticker-cell strong {
+.sticker-cell > .sticker-number {
+  display: block;
   width: 100%;
-  font-size: 9px;
+  justify-self: center;
+  text-align: center;
+  font-size: 10px;
   font-weight: 920;
+  line-height: 1;
+  z-index: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.sticker-cell span {
+.sticker-cell > .sticker-symbol {
+  display: block;
+  justify-self: center;
+  text-align: center;
+  z-index: 1;
+  font-size: 16px;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.sticker-cell > .sticker-name {
+  display: block;
   width: 100%;
-  font-size: 8px;
+  justify-self: center;
+  z-index: 1;
+  text-align: center;
+  font-size: 9px;
   font-weight: 820;
   line-height: 1.05;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.sticker-cell small {
-  font-size: 8px;
-  font-weight: 900;
 }
 
 .sticker-cell[data-status="missing"] {

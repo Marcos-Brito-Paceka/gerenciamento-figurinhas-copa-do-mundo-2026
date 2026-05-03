@@ -19,8 +19,7 @@
 
 .header p,
 #stickerResults,
-.team-header p,
-.album-summary p {
+.team-header p {
   color: var(--muted);
   font-size: 12px;
   font-weight: 760;
