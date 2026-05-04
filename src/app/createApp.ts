@@ -6,6 +6,7 @@ import {
   loadProgress,
   savePreferences,
   saveProgress,
+  debouncedSaveProgress,
 } from "../services/storage";
 import { getAllStickers, getProgressPercent } from "../utils/albumStats";
 import { renderTeams } from "../render/renderTeams";
@@ -252,7 +253,7 @@ export function createApp(): void {
 
     lastChangedStickerNumber = stickerNumber;
 
-    saveProgress(state.albumTeams);
+    debouncedSaveProgress(state.albumTeams);
     updateTeamHeaderProgress(teamHeader, team);
     renderSelectedStickersOnly();
     updateActiveTeamProgressCell();

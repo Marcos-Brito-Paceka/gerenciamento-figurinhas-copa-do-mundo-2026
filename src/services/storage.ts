@@ -1,5 +1,7 @@
 import type { AppPreferences, Team } from '../types/album'
 import { defaultPreferences } from '../state/appState'
+import { debounce } from '../utils/debounce'
+import { compress, decompress } from 'lz-string'
 
 const PROGRESS_KEY = 'album2026-progress'
 const PREFERENCES_KEY = 'album2026-settings'
@@ -23,8 +25,12 @@ export function saveProgress(teams: Team[]): void {
     })),
   }))
 
-  localStorage.setItem(PROGRESS_KEY, JSON.stringify(payload))
+  const json = JSON.stringify(payload)
+  const compressed = compress(json)
+  localStorage.setItem(PROGRESS_KEY, compressed)
 }
+
+export const debouncedSaveProgress = debounce(saveProgress, 500)
 
 export function clearProgress(): void {
   localStorage.removeItem(PROGRESS_KEY)
@@ -36,7 +42,9 @@ export function loadProgress(teams: Team[]): Team[] {
   if (!saved) return teams
 
   try {
-    const parsed = JSON.parse(saved) as SavedTeam[]
+    const decompressed = decompress(saved)
+    if (!decompressed) return teams
+    const parsed = JSON.parse(decompressed) as SavedTeam[]
 
     parsed.forEach((savedTeam) => {
       const team = teams.find((item) => item.id === savedTeam.id)
