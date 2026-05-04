@@ -11,6 +11,7 @@ export type Team = {
   id: string
   name: string
   code: string
+  kind?: 'section' | 'team'
   stickers: Sticker[]
 }
 
@@ -20,5 +21,6 @@ export type AppPreferences = {
   vibration: 'on' | 'off'
   density: 'compact' | 'comfortable'
   statusCycle: 'full' | 'simple'
+  teamMatrix: '4x3' | '5x3' | '6x4'
   language: 'pt' | 'en'
 }

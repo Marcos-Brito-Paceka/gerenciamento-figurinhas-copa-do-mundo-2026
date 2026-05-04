@@ -9,8 +9,8 @@
     transform: scale(1) rotate(0);
   }
 
-  45% {
-    transform: scale(1.08) rotate(-2deg);
+  50% {
+    transform: scale(1.018) rotate(-0.45deg);
   }
 
   100% {
@@ -24,7 +24,7 @@
   }
 
   45% {
-    transform: translateY(-1px) scale(1.12);
+    transform: translateY(-0.5px) scale(1.035);
   }
 
   100% {
@@ -39,7 +39,7 @@
   }
 
   45% {
-    transform: scale(1.04);
+    transform: scale(1.018);
   }
 }
 

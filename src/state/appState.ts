@@ -7,6 +7,7 @@ export const defaultPreferences: AppPreferences = {
   vibration: 'on',
   density: 'compact',
   statusCycle: 'full',
+  teamMatrix: '4x3',
   language: 'pt',
 }
 

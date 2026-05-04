@@ -50,6 +50,7 @@ export function createApp(): void {
 
   function applyPreferences(): void {
     document.documentElement.dataset.motion = preferences.motion;
+    document.documentElement.dataset.teamMatrix = preferences.teamMatrix;
     updateSettingsUI();
   }
 
@@ -79,6 +80,13 @@ export function createApp(): void {
       button.classList.toggle(
         "active",
         button.dataset.cycleOption === preferences.statusCycle,
+      );
+    });
+
+    document.querySelectorAll<HTMLButtonElement>("[data-matrix-option]").forEach((button) => {
+      button.classList.toggle(
+        "active",
+        button.dataset.matrixOption === preferences.teamMatrix,
       );
     });
   }
@@ -139,6 +147,7 @@ export function createApp(): void {
     renderTeamHeader(teamHeader, selectedTeam);
     renderTeams(matrix, visibleTeams, {
       selectedTeamId: selectedTeam.id,
+      matrix: preferences.teamMatrix,
     });
 
     stickerResults.textContent = `${selectedTeam.stickers.length} figurinhas`;
@@ -358,6 +367,7 @@ export function createApp(): void {
       "[data-vibration-option]",
     );
     const cycleOption = target.closest<HTMLButtonElement>("[data-cycle-option]");
+    const matrixOption = target.closest<HTMLButtonElement>("[data-matrix-option]");
 
     if (motionOption?.dataset.motionOption === "full" || motionOption?.dataset.motionOption === "light") {
       updatePreference("motion", motionOption.dataset.motionOption);
@@ -379,6 +389,16 @@ export function createApp(): void {
 
     if (cycleOption?.dataset.cycleOption === "full" || cycleOption?.dataset.cycleOption === "simple") {
       updatePreference("statusCycle", cycleOption.dataset.cycleOption);
+      return;
+    }
+
+    if (
+      matrixOption?.dataset.matrixOption === "4x3" ||
+      matrixOption?.dataset.matrixOption === "5x3" ||
+      matrixOption?.dataset.matrixOption === "6x4"
+    ) {
+      updatePreference("teamMatrix", matrixOption.dataset.matrixOption);
+      updateSelectedTeam(state.selectedTeamIndex);
     }
   });
 

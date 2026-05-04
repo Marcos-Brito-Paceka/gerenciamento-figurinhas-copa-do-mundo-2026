@@ -23,7 +23,7 @@ export function renderAppShell(container: HTMLElement): void {
         <input
          id="teamSearch"
          type="search"
-         placeholder="Buscar seleção por nome ou sigla"
+         placeholder="Buscar seção, seleção ou sigla"
          />
       <div id="teamMatrix" class="team-matrix"></div>
     </section>
@@ -56,6 +56,18 @@ export function renderAppShell(container: HTMLElement): void {
         <div class="backup-actions">
           <button class="ghost" type="button" id="exportJson">Exportar JSON</button>
           <button class="ghost" type="button" id="importJson">Importar JSON</button>
+        </div>
+      </div>
+
+      <div class="setting-row">
+        <div>
+          <strong>Matriz de seleções</strong>
+          <span>Escolha quantas bandeiras aparecem por página no celular.</span>
+        </div>
+        <div class="segmented">
+          <button type="button" data-matrix-option="4x3">4 x 3</button>
+          <button type="button" data-matrix-option="5x3">5 x 3</button>
+          <button type="button" data-matrix-option="6x4">6 x 4</button>
         </div>
       </div>
 

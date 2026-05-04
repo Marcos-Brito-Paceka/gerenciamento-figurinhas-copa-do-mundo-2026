@@ -13,7 +13,7 @@ export function renderTeamHeader(
   container.innerHTML = `
     <article class="team-header">
       <div>
-        <span>Seleção ativa</span>
+        <span>${team.kind === 'section' ? 'Seção ativa' : 'Seleção ativa'}</span>
         <h2>${team.name}</h2>
         <p>${owned} / ${team.stickers.length} figurinhas · ${progress}%</p>
       </div>

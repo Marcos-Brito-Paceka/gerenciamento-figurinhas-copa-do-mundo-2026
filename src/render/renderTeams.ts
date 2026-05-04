@@ -5,6 +5,7 @@ import { getProgressPercent } from "../utils/albumStats";
 
 type RenderTeamsOptions = {
   selectedTeamId: string;
+  matrix: "4x3" | "5x3" | "6x4";
   visibleLimit?: number;
 };
 
@@ -21,7 +22,12 @@ export function renderTeams(
       ],
     ),
   );
-  const visibleLimit = options.visibleLimit ?? 12;
+  const matrixLimits = {
+    "4x3": 12,
+    "5x3": 15,
+    "6x4": 24,
+  };
+  const visibleLimit = options.visibleLimit ?? matrixLimits[options.matrix];
   const teamPages = Array.from(
     { length: Math.ceil(teams.length / visibleLimit) },
     (_, index) => teams.slice(index * visibleLimit, (index + 1) * visibleLimit),
@@ -34,23 +40,28 @@ export function renderTeams(
   }
 
   function renderTeamCell(team: Team): string {
+    const isSection = team.kind === "section";
     const flag =
       flagStyles[team.code] ??
-      "linear-gradient(135deg, #e9e4d8, #fffdf8)";
+      "linear-gradient(135deg, rgba(214, 225, 102, 0.42), #fffdf8)";
     const completion = getProgressPercent(team.stickers);
-    const flagSvgUrl = getFlagSvgUrl(team.code);
+    const flagSvgUrl = isSection ? null : getFlagSvgUrl(team.code);
     const progressAngle = `${completion * 3.6}deg`;
     const previousAngle = previousAngles.get(team.id) || progressAngle;
 
     return `
       <button
-        class="team-cell ${team.id === options.selectedTeamId ? "active" : ""}"
+        class="team-cell ${isSection ? "team-cell--section" : ""} ${team.id === options.selectedTeamId ? "active" : ""}"
         data-team="${team.id}"
         data-progress-angle="${progressAngle}"
         style="--flag: ${flag}; --angle: ${previousAngle}; --dot: ${progressDotColor(completion)}"
         aria-label="${team.name}, ${completion}% completo"
       >
-        <span class="team-flag" aria-hidden="true" ${flagSvgUrl ? "hidden" : ""}></span>
+        ${
+          isSection
+            ? `<span class="team-section-icon" aria-hidden="true">FWC</span>`
+            : `<span class="team-flag" aria-hidden="true" ${flagSvgUrl ? "hidden" : ""}></span>`
+        }
         ${
           flagSvgUrl
             ? `<img class="team-flag-image" src="${flagSvgUrl}" alt="" loading="lazy" decoding="async" onerror="this.hidden=true;this.previousElementSibling.hidden=false" />`
@@ -73,7 +84,7 @@ export function renderTeams(
               `,
             )
             .join("")
-        : `<p class="team-empty">Nenhuma seleção encontrada.</p>`
+        : `<p class="team-empty">Nenhuma seção ou seleção encontrada.</p>`
     }
   `;
 

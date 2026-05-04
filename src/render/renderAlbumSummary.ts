@@ -48,18 +48,11 @@ export function renderAlbumSummary(
   `
 
   const ring = container.querySelector<HTMLElement>('.ring')
-  const counters = container.querySelectorAll<HTMLElement>('.counter')
-
   requestAnimationFrame(() => {
     if (ring) {
       ring.style.setProperty('--angle', `${completion * 3.6}deg`)
       ring.classList.remove('pulse')
       requestAnimationFrame(() => ring.classList.add('pulse'))
     }
-
-    counters.forEach((counter) => {
-      counter.classList.remove('bump')
-      requestAnimationFrame(() => counter.classList.add('bump'))
-    })
   })
 }

@@ -21,7 +21,7 @@
 }
 
 .settings-button:active {
-  transform: scale(0.94);
+  transform: scale(0.98);
 }
 
 .settings-button svg {
@@ -154,6 +154,18 @@
   scroll-snap-align: start;
 }
 
+html[data-team-matrix="5x3"] .team-page {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(52px, 1fr));
+  gap: 6px;
+}
+
+html[data-team-matrix="6x4"] .team-page {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-rows: repeat(4, minmax(44px, 1fr));
+  gap: 5px;
+}
+
 .team-empty {
   grid-column: 1;
   min-height: 88px;
@@ -193,6 +205,20 @@
     box-shadow 180ms ease;
 }
 
+html[data-team-matrix="5x3"] .team-cell {
+  min-height: 52px;
+  border-radius: 14px;
+  font-size: 10px;
+}
+
+html[data-team-matrix="6x4"] .team-cell {
+  min-height: 44px;
+  border-width: 1px;
+  border-radius: 12px;
+  gap: 2px;
+  font-size: 9px;
+}
+
 .team-cell::after {
   content: "";
   width: 4px;
@@ -203,11 +229,25 @@
   background: var(--dot);
 }
 
+html[data-team-matrix="6x4"] .team-cell::after {
+  bottom: 5px;
+}
+
 .team-cell.active {
   border-color: var(--ink);
   background: var(--ink);
   color: var(--surface);
   box-shadow: 0 8px 18px rgba(21, 21, 21, 0.12);
+}
+
+.team-cell--section {
+  background:
+    linear-gradient(var(--surface-soft), var(--surface-soft)) padding-box,
+    conic-gradient(var(--have) var(--angle), rgba(21, 21, 21, 0.08) 0) border-box;
+}
+
+.team-cell--section.active {
+  background: var(--ink);
 }
 
 .team-matrix:has(.team-cell.active) .team-cell:not(.active) .team-flag,
@@ -235,7 +275,7 @@
 }
 
 .team-cell:active {
-  transform: scale(0.94);
+  transform: scale(0.98);
 }
 
 .team-header {
@@ -317,7 +357,7 @@
   position: relative;
   overflow: hidden;
   transition:
-    transform 180ms ease,
+    transform 220ms ease,
     border-color 180ms ease,
     background 180ms ease,
     color 180ms ease,
@@ -335,11 +375,11 @@
 }
 
 .sticker-cell:active {
-  transform: scale(0.94);
+  transform: scale(0.985);
 }
 
 .sticker-cell.changed {
-  animation: stickerFlip 420ms ease;
+  animation: stickerFlip 260ms ease-out;
 }
 
 .sticker-cell > .sticker-number {
@@ -407,6 +447,19 @@
   display: block;
 }
 
+html[data-team-matrix="5x3"] .team-flag,
+html[data-team-matrix="5x3"] .team-flag-image {
+  width: 24px;
+  height: 16px;
+}
+
+html[data-team-matrix="6x4"] .team-flag,
+html[data-team-matrix="6x4"] .team-flag-image {
+  width: 22px;
+  height: 14px;
+  border-radius: 4px;
+}
+
 .team-flag[hidden],
 .team-flag-image[hidden] {
   display: none;
@@ -421,6 +474,42 @@
   object-fit: cover;
   background: var(--surface);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
+.team-section-icon {
+  min-width: 30px;
+  height: 17px;
+  padding: 0 5px;
+  border: 1px solid rgba(21, 21, 21, 0.14);
+  border-radius: 5px;
+  display: grid;
+  place-items: center;
+  background: var(--accent);
+  color: var(--ink);
+  font-size: 8px;
+  font-weight: 950;
+  line-height: 1;
+  transition:
+    transform 160ms ease,
+    opacity 160ms ease;
+}
+
+html[data-team-matrix="5x3"] .team-section-icon {
+  min-width: 28px;
+  height: 16px;
+  font-size: 7px;
+}
+
+html[data-team-matrix="6x4"] .team-section-icon {
+  min-width: 25px;
+  height: 14px;
+  border-radius: 4px;
+  font-size: 7px;
+}
+
+.team-cell.active .team-section-icon {
+  border-color: rgba(255, 253, 248, 0.35);
+  transform: translateY(-1px);
 }
 
 .flag {

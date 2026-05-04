@@ -89,6 +89,28 @@
 
   .team-cell {
     min-height: 54px;
+    border-width: 2px;
+    border-radius: var(--radius-md);
+    gap: 4px;
+    font-size: 11px;
+  }
+
+  html[data-team-matrix] .team-cell {
+    min-height: 54px;
+  }
+
+  html[data-team-matrix] .team-flag,
+  html[data-team-matrix] .team-flag-image {
+    width: 26px;
+    height: 17px;
+    border-radius: 5px;
+  }
+
+  html[data-team-matrix] .team-section-icon {
+    min-width: 30px;
+    height: 17px;
+    border-radius: 5px;
+    font-size: 8px;
   }
 
   .sticker-matrix {
