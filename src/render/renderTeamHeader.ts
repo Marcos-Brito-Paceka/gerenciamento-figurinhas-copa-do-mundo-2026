@@ -1,4 +1,6 @@
 import type { Team } from '../types/album'
+import { getFlagSvgUrl } from '../data/flagSvgSources'
+import { getTeamTheme } from '../data/teamThemes'
 import { countOwned, getProgressPercent } from '../utils/albumStats'
 
 export function renderTeamHeader(
@@ -9,16 +11,21 @@ export function renderTeamHeader(
   const progress = getProgressPercent(team.stickers)
   const previousFill = container.querySelector<HTMLElement>('.team-progress div')
   const previousWidth = previousFill?.style.width || '0%'
+  const flagSvgUrl = team.kind === 'section' ? null : getFlagSvgUrl(team.code)
+  const [themeA, themeB, themeC] = getTeamTheme(team.code, team.kind)
+  const headerVisual = flagSvgUrl
+    ? `<img class="team-header-flag" src="${flagSvgUrl}" alt="" loading="lazy" decoding="async" />`
+    : `<strong class="team-header-code">${team.code}</strong>`
 
   container.innerHTML = `
-    <article class="team-header">
+    <article class="team-header" style="--team-theme-a: ${themeA}; --team-theme-b: ${themeB}; --team-theme-c: ${themeC}">
       <div>
         <span>${team.kind === 'section' ? 'Seção ativa' : 'Seleção ativa'}</span>
         <h2>${team.name}</h2>
         <p>${owned} / ${team.stickers.length} figurinhas · ${progress}%</p>
       </div>
 
-      <strong>${team.code}</strong>
+      ${headerVisual}
 
       <div class="team-progress">
         <div style="width: ${previousWidth}"></div>
