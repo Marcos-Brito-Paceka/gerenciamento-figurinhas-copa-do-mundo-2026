@@ -140,25 +140,60 @@ export function createApp(): void {
     progressText.textContent = `Progresso salvo: ${getProgressPercent(getStickers())}%`;
   }
 
+  function progressDotColor(value: number): string {
+    if (value >= 80) return "var(--have)";
+    if (value >= 45) return "var(--accent)";
+
+    return "var(--missing)";
+  }
+
+  function updateActiveTeamProgressCell(): void {
+    const selectedTeam = state.albumTeams[state.selectedTeamIndex];
+    const completion = getProgressPercent(selectedTeam.stickers);
+    const teamButton = matrix.querySelector<HTMLElement>(
+      `[data-team="${selectedTeam.id}"]`,
+    );
+
+    if (!teamButton) return;
+
+    teamButton.dataset.progressAngle = `${completion * 3.6}deg`;
+    teamButton.style.setProperty("--angle", `${completion * 3.6}deg`);
+    teamButton.style.setProperty("--dot", progressDotColor(completion));
+    teamButton.setAttribute(
+      "aria-label",
+      `${selectedTeam.name}, ${completion}% completo`,
+    );
+  }
+
+  function renderSelectedTeamDetails(): void {
+    const selectedTeam = state.albumTeams[state.selectedTeamIndex];
+
+    renderTeamHeader(teamHeader, selectedTeam);
+    stickerResults.textContent = `${selectedTeam.stickers.length} figurinhas`;
+
+    renderStickers(
+      stickerMatrix,
+      {
+        ...selectedTeam,
+        stickers: selectedTeam.stickers,
+      },
+      lastChangedStickerNumber,
+    );
+
+    lastChangedStickerNumber = "";
+  }
+
   function updateSelectedTeam(index: number): void {
     state.selectedTeamIndex = index;
     const selectedTeam = state.albumTeams[state.selectedTeamIndex];
     const visibleTeams = getVisibleTeams();
 
-
-    renderTeamHeader(teamHeader, selectedTeam);
     renderTeams(matrix, visibleTeams, {
       selectedTeamId: selectedTeam.id,
       matrix: preferences.teamMatrix,
     });
 
-    stickerResults.textContent = `${selectedTeam.stickers.length} figurinhas`;
-
-    renderStickers(stickerMatrix, {
-      ...selectedTeam,
-      stickers: selectedTeam.stickers,
-    }, lastChangedStickerNumber);
-  lastChangedStickerNumber = "";
+    renderSelectedTeamDetails();
   }
 
   function toggleStickerStatus(stickerNumber: string): void {
@@ -181,7 +216,8 @@ export function createApp(): void {
     lastChangedStickerNumber = stickerNumber;
 
     saveProgress(state.albumTeams);
-    updateSelectedTeam(state.selectedTeamIndex);
+    renderSelectedTeamDetails();
+    updateActiveTeamProgressCell();
     updateProgress();
     updateAlbumSummary();
   }
