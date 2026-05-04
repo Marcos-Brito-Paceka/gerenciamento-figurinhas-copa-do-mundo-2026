@@ -1,6 +1,7 @@
 import "../styles/main.css";
 import { teams } from "../data/team.ts";
 import {
+  clearProgress,
   loadPreferences,
   loadProgress,
   savePreferences,
@@ -124,6 +125,7 @@ export function createApp(): void {
   const exportJson = getElement<HTMLButtonElement>("#exportJson");
   const importJson = getElement<HTMLButtonElement>("#importJson");
   const importJsonFile = getElement<HTMLInputElement>("#importJsonFile");
+  const clearProgressButton = getElement<HTMLButtonElement>("#clearProgress");
 
   function updateAlbumSummary(): void {
     renderAlbumSummary(albumSummary, state.albumTeams);
@@ -328,6 +330,24 @@ export function createApp(): void {
     settingsModal.classList.remove("open");
   }
 
+  function resetAllProgress(): void {
+    const confirmed = window.confirm(
+      "Tem certeza que deseja limpar todo o progresso do álbum?",
+    );
+
+    if (!confirmed) return;
+
+    state.albumTeams.forEach((team) => {
+      team.stickers.forEach((sticker) => {
+        sticker.status = "missing";
+      });
+    });
+
+    clearProgress();
+    renderCurrentState();
+    closeSettingsModal();
+  }
+
   applyPreferences();
   updateSelectedTeam(state.selectedTeamIndex);
   updateAlbumSummary();
@@ -349,6 +369,7 @@ export function createApp(): void {
 
   exportJson.addEventListener("click", exportBackupJson);
   importJson.addEventListener("click", () => importJsonFile.click());
+  clearProgressButton.addEventListener("click", resetAllProgress);
   importJsonFile.addEventListener("change", () => {
     const file = importJsonFile.files?.[0];
 

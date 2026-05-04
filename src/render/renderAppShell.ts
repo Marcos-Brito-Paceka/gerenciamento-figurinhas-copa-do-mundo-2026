@@ -61,6 +61,16 @@ export function renderAppShell(container: HTMLElement): void {
 
       <div class="setting-row">
         <div>
+          <strong>Progresso</strong>
+          <span>Limpe todas as figurinhas marcadas e comece do zero.</span>
+        </div>
+        <div class="backup-actions">
+          <button class="danger" type="button" id="clearProgress">Limpar tudo</button>
+        </div>
+      </div>
+
+      <div class="setting-row">
+        <div>
           <strong>Matriz de seleções</strong>
           <span>Escolha quantas bandeiras aparecem por página no celular.</span>
         </div>

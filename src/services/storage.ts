@@ -26,6 +26,10 @@ export function saveProgress(teams: Team[]): void {
   localStorage.setItem(PROGRESS_KEY, JSON.stringify(payload))
 }
 
+export function clearProgress(): void {
+  localStorage.removeItem(PROGRESS_KEY)
+}
+
 export function loadProgress(teams: Team[]): Team[] {
   const saved = localStorage.getItem(PROGRESS_KEY)
 

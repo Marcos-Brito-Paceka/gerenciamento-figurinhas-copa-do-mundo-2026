@@ -649,7 +649,8 @@ html[data-team-matrix="6x4"] .team-section-icon {
 
 .segmented button,
 .ghost,
-.solid {
+.solid,
+.danger {
   min-height: 38px;
   padding: 0 13px;
   border: 1px solid var(--line);
@@ -672,9 +673,16 @@ html[data-team-matrix="6x4"] .team-section-icon {
   color: var(--surface);
 }
 
+.danger {
+  border-color: rgba(168, 68, 75, 0.32);
+  background: rgba(168, 68, 75, 0.1);
+  color: var(--danger);
+}
+
 .segmented button:active,
 .ghost:active,
-.solid:active {
+.solid:active,
+.danger:active {
   transform: scale(0.97);
 }
 
