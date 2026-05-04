@@ -3,6 +3,24 @@ import { getFlagSvgUrl } from '../data/flagSvgSources'
 import { getTeamTheme } from '../data/teamThemes'
 import { countOwned, getProgressPercent } from '../utils/albumStats'
 
+export function updateTeamHeaderProgress(
+  container: HTMLElement,
+  team: Team,
+): void {
+  const owned = countOwned(team.stickers)
+  const progress = getProgressPercent(team.stickers)
+  const meta = container.querySelector<HTMLParagraphElement>('[data-team-meta]')
+  const fill = container.querySelector<HTMLElement>('.team-progress div')
+
+  if (meta) {
+    meta.textContent = `${owned} / ${team.stickers.length} figurinhas · ${progress}%`
+  }
+
+  if (fill) {
+    fill.style.width = `${progress}%`
+  }
+}
+
 export function renderTeamHeader(
   container: HTMLElement,
   team: Team,
@@ -22,7 +40,7 @@ export function renderTeamHeader(
       <div>
         <span>${team.kind === 'section' ? 'Seção ativa' : 'Seleção ativa'}</span>
         <h2>${team.name}</h2>
-        <p>${owned} / ${team.stickers.length} figurinhas · ${progress}%</p>
+        <p data-team-meta>${owned} / ${team.stickers.length} figurinhas · ${progress}%</p>
       </div>
 
       ${headerVisual}

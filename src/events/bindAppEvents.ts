@@ -12,6 +12,7 @@ type BindAppEventsParams = {
   updateAlbumSummary: () => void;
   toggleStickerStatus: (stickerNumber: string) => void;
   getVisibleTeams: () => Team[];
+  renderTeamMatrix: () => void;
   setTeamQuery: (query: string) => void;
 };
 
@@ -54,6 +55,6 @@ export function bindAppEvents(params: BindAppEventsParams): void {
     const target = event.target as HTMLInputElement;
 
     params.setTeamQuery(target.value);
-    params.updateSelectedTeam(params.getSelectedTeamIndex());
+    params.renderTeamMatrix();
   });
 }

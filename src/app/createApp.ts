@@ -11,7 +11,10 @@ import { getAllStickers, getProgressPercent } from "../utils/albumStats";
 import { renderTeams } from "../render/renderTeams";
 import { renderStickers } from "../render/renderStickers";
 import { getNextStatus } from "../utils/stickerStatus";
-import { renderTeamHeader } from "../render/renderTeamHeader";
+import {
+  renderTeamHeader,
+  updateTeamHeaderProgress,
+} from "../render/renderTeamHeader";
 import { renderAlbumSummary } from "../render/renderAlbumSummary";
 import { renderAppShell } from "../render/renderAppShell";
 import { bindAppEvents } from "../events/bindAppEvents";
@@ -165,6 +168,19 @@ export function createApp(): void {
     );
   }
 
+  function updateActiveTeamCell(): void {
+    const selectedTeam = state.albumTeams[state.selectedTeamIndex];
+
+    matrix.querySelectorAll<HTMLElement>("[data-team]").forEach((teamButton) => {
+      teamButton.classList.toggle(
+        "active",
+        teamButton.dataset.team === selectedTeam.id,
+      );
+    });
+
+    updateActiveTeamProgressCell();
+  }
+
   function renderSelectedTeamDetails(): void {
     const selectedTeam = state.albumTeams[state.selectedTeamIndex];
 
@@ -183,8 +199,24 @@ export function createApp(): void {
     lastChangedStickerNumber = "";
   }
 
-  function updateSelectedTeam(index: number): void {
-    state.selectedTeamIndex = index;
+  function renderSelectedStickersOnly(): void {
+    const selectedTeam = state.albumTeams[state.selectedTeamIndex];
+
+    stickerResults.textContent = `${selectedTeam.stickers.length} figurinhas`;
+
+    renderStickers(
+      stickerMatrix,
+      {
+        ...selectedTeam,
+        stickers: selectedTeam.stickers,
+      },
+      lastChangedStickerNumber,
+    );
+
+    lastChangedStickerNumber = "";
+  }
+
+  function renderTeamMatrix(): void {
     const selectedTeam = state.albumTeams[state.selectedTeamIndex];
     const visibleTeams = getVisibleTeams();
 
@@ -192,6 +224,11 @@ export function createApp(): void {
       selectedTeamId: selectedTeam.id,
       matrix: preferences.teamMatrix,
     });
+  }
+
+  function updateSelectedTeam(index: number): void {
+    state.selectedTeamIndex = index;
+    updateActiveTeamCell();
 
     renderSelectedTeamDetails();
   }
@@ -216,7 +253,8 @@ export function createApp(): void {
     lastChangedStickerNumber = stickerNumber;
 
     saveProgress(state.albumTeams);
-    renderSelectedTeamDetails();
+    updateTeamHeaderProgress(teamHeader, team);
+    renderSelectedStickersOnly();
     updateActiveTeamProgressCell();
     updateProgress();
     updateAlbumSummary();
@@ -237,7 +275,8 @@ export function createApp(): void {
   }
 
   function renderCurrentState(): void {
-    updateSelectedTeam(state.selectedTeamIndex);
+    renderTeamMatrix();
+    renderSelectedTeamDetails();
     updateAlbumSummary();
     updateProgress();
   }
@@ -385,7 +424,8 @@ export function createApp(): void {
   }
 
   applyPreferences();
-  updateSelectedTeam(state.selectedTeamIndex);
+  renderTeamMatrix();
+  renderSelectedTeamDetails();
   updateAlbumSummary();
   updateProgress();
 
@@ -455,7 +495,7 @@ export function createApp(): void {
       matrixOption?.dataset.matrixOption === "6x4"
     ) {
       updatePreference("teamMatrix", matrixOption.dataset.matrixOption);
-      updateSelectedTeam(state.selectedTeamIndex);
+      renderTeamMatrix();
     }
   });
 
@@ -476,6 +516,7 @@ export function createApp(): void {
       state.teamQuery = query;
     },
     getVisibleTeams,
+    renderTeamMatrix,
 
     updateSelectedTeam,
     updateProgress,
