@@ -1,4 +1,3 @@
-import "../styles/main.css";
 import { teams } from "../data/team.ts";
 import {
   clearProgress,

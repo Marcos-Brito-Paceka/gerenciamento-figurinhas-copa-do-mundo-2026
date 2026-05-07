@@ -1,5 +1,7 @@
 export function renderAppShell(container: HTMLElement): void {
   container.innerHTML = `
+  <div class="beta-badge" aria-label="Versão beta 0.0.1">beta 0.0.1</div>
+
   <div class="app">
   <header class="header">
     <div>
