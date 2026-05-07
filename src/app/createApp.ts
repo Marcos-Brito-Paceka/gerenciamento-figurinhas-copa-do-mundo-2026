@@ -122,6 +122,9 @@ export function createApp(): void {
   const stickerMatrix = getElement<HTMLDivElement>("#stickerMatrix");
   const teamHeader = getElement<HTMLDivElement>("#teamHeader");
   const stickerResults = getElement<HTMLParagraphElement>("#stickerResults");
+  const helpButton = getElement<HTMLButtonElement>("#helpButton");
+  const helpModal = getElement<HTMLDivElement>("#helpModal");
+  const closeHelp = getElement<HTMLButtonElement>("#closeHelp");
   const shareButton = getElement<HTMLButtonElement>("#shareButton");
   const shareModal = getElement<HTMLDivElement>("#shareModal");
   const closeShare = getElement<HTMLButtonElement>("#closeShare");
@@ -417,6 +420,14 @@ export function createApp(): void {
     shareModal.classList.remove("open");
   }
 
+  function openHelpModal(): void {
+    helpModal.classList.add("open");
+  }
+
+  function closeHelpModal(): void {
+    helpModal.classList.remove("open");
+  }
+
   function resetAllProgress(): void {
     const confirmed = window.confirm(
       "Tem certeza que deseja limpar todo o progresso do álbum?",
@@ -440,6 +451,14 @@ export function createApp(): void {
   renderSelectedTeamDetails();
   updateAlbumSummary();
   updateProgress();
+
+  helpButton.addEventListener("click", openHelpModal);
+  closeHelp.addEventListener("click", closeHelpModal);
+  helpModal.addEventListener("click", (event) => {
+    if (event.target === helpModal) {
+      closeHelpModal();
+    }
+  });
 
   shareButton.addEventListener("click", openShareModal);
   closeShare.addEventListener("click", closeShareModal);

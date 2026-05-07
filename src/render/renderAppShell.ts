@@ -8,6 +8,14 @@ export function renderAppShell(container: HTMLElement): void {
     </div>
 
     <div class="header-actions">
+      <button class="settings-button" type="button" id="helpButton" aria-label="Abrir dúvidas sobre o app">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+          <path d="M9.2 9a3 3 0 0 1 5.82 1c0 2-3 2.25-3 4.25" />
+          <path d="M12 17.5h.01" />
+          <circle cx="12" cy="12" r="9" />
+        </svg>
+      </button>
+
       <a class="settings-button" href="https://www.linkedin.com/in/marcos-debrito/" target="_blank" rel="noreferrer" aria-label="Abrir LinkedIn de Marcos de Brito">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path d="M6.94 8.9H3.66v10.45h3.28V8.9ZM5.3 4.65a1.9 1.9 0 1 0 0 3.8 1.9 1.9 0 0 0 0-3.8ZM20.34 13.36c0-3.16-1.68-4.63-3.93-4.63a3.39 3.39 0 0 0-3.05 1.68h-.04V8.9h-3.15v10.45h3.28v-5.17c0-1.36.26-2.68 1.94-2.68 1.66 0 1.68 1.55 1.68 2.76v5.09h3.27v-5.99Z" />
@@ -57,6 +65,33 @@ export function renderAppShell(container: HTMLElement): void {
       <div id="stickerMatrix" class="sticker-matrix"></div>
     </section>
   </main>
+</div>
+
+<div class="modal-backdrop" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="help-modal">
+    <p class="kicker">Dúvidas</p>
+    <h2 id="helpTitle">Como usar o app</h2>
+
+    <div class="help-content">
+      <p>Este app ajuda você a acompanhar seu álbum da Copa do Mundo 2026 por seleção, marcando figurinhas que faltam, que você já tem e que estão repetidas.</p>
+
+      <ul>
+        <li>Busque seleções pelo nome ou sigla.</li>
+        <li>Toque em uma figurinha para mudar o status dela.</li>
+        <li>Acompanhe o progresso geral e por seleção.</li>
+        <li>Use as configurações para backup em JSON, som, vibração, animações e modo de marcação.</li>
+        <li>Compartilhe o app pelo QR code no topo.</li>
+      </ul>
+
+      <p>Encontrou algum bug? Envie um email para <a href="mailto:marcos.debrito@outlook.com">marcos.debrito@outlook.com</a>.</p>
+      <p>Pode me chamar no LinkedIn também para mandar feedbacks, sugestões ou ideias de melhoria.</p>
+    </div>
+
+    <div class="modal-actions">
+      <a class="ghost" href="https://www.linkedin.com/in/marcos-debrito/" target="_blank" rel="noreferrer">LinkedIn</a>
+      <button class="solid" type="button" id="closeHelp">Fechar</button>
+    </div>
+  </div>
 </div>
 
 <div class="modal-backdrop" id="shareModal" role="dialog" aria-modal="true" aria-labelledby="shareTitle">

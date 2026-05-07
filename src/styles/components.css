@@ -590,7 +590,8 @@ html[data-team-matrix="6x4"] .team-section-icon {
 }
 
 .settings-modal,
-.share-modal {
+.share-modal,
+.help-modal {
   width: min(100%, 420px);
   max-height: min(720px, calc(100svh - 36px));
   padding: 18px;
@@ -605,7 +606,8 @@ html[data-team-matrix="6x4"] .team-section-icon {
 }
 
 .modal-backdrop.open .settings-modal,
-.modal-backdrop.open .share-modal {
+.modal-backdrop.open .share-modal,
+.modal-backdrop.open .help-modal {
   transform: translateY(0) scale(1);
 }
 
@@ -637,6 +639,29 @@ html[data-team-matrix="6x4"] .team-section-icon {
   font-size: 12px;
   font-weight: 760;
   line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.help-content {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.help-content ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.help-content a {
+  color: var(--ink);
+  font-weight: 900;
   overflow-wrap: anywhere;
 }
 
@@ -691,6 +716,9 @@ html[data-team-matrix="6x4"] .team-section-icon {
 .ghost,
 .solid,
 .danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 38px;
   padding: 0 13px;
   border: 1px solid var(--line);
@@ -699,6 +727,7 @@ html[data-team-matrix="6x4"] .team-section-icon {
   color: var(--ink);
   font-size: 12px;
   font-weight: 900;
+  text-decoration: none;
   transition:
     transform 140ms ease,
     background 180ms ease,
