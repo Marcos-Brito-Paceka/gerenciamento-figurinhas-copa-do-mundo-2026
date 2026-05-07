@@ -20,6 +20,7 @@
   place-items: center;
   background: var(--surface);
   color: var(--ink);
+  text-decoration: none;
   transition:
     transform 160ms ease,
     background 180ms ease,

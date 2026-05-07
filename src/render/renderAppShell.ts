@@ -8,6 +8,12 @@ export function renderAppShell(container: HTMLElement): void {
     </div>
 
     <div class="header-actions">
+      <a class="settings-button" href="https://www.linkedin.com/in/marcos-debrito/" target="_blank" rel="noreferrer" aria-label="Abrir LinkedIn de Marcos de Brito">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M6.94 8.9H3.66v10.45h3.28V8.9ZM5.3 4.65a1.9 1.9 0 1 0 0 3.8 1.9 1.9 0 0 0 0-3.8ZM20.34 13.36c0-3.16-1.68-4.63-3.93-4.63a3.39 3.39 0 0 0-3.05 1.68h-.04V8.9h-3.15v10.45h3.28v-5.17c0-1.36.26-2.68 1.94-2.68 1.66 0 1.68 1.55 1.68 2.76v5.09h3.27v-5.99Z" />
+        </svg>
+      </a>
+
       <button class="settings-button" type="button" id="shareButton" aria-label="Abrir QR code do site">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
           <rect x="3" y="3" width="7" height="7" rx="1.4" />
