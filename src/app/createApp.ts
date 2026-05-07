@@ -21,7 +21,22 @@ import { bindAppEvents } from "../events/bindAppEvents";
 import { createAppState, defaultPreferences } from "../state/appState";
 import { loadUIState, saveUIState } from '../services/uiStorage';
 import { playTapSound } from "../services/audioFeedback";
+import {
+  applyRemoteSnapshot,
+  buildRemoteSnapshot,
+  getCurrentUser,
+  isSupabaseConfigured,
+  loadRemoteSnapshot,
+  onAuthChange,
+  saveRemoteSnapshot,
+  signInWithGoogle,
+  signInWithPassword,
+  signOut,
+  signUpWithPassword,
+} from "../services/remoteStorage";
+import { debounce } from "../utils/debounce";
 import type { AppPreferences, StickerStatus } from "../types/album";
+import type { User } from "@supabase/supabase-js";
 
 function getElement<T extends HTMLElement>(selector: string): T {
   const element = document.querySelector<T>(selector);
@@ -33,12 +48,28 @@ function getElement<T extends HTMLElement>(selector: string): T {
   return element;
 }
 
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+
+  if (
+    error &&
+    typeof error === "object" &&
+    "message" in error &&
+    typeof error.message === "string"
+  ) {
+    return error.message;
+  }
+
+  return "Erro desconhecido.";
+}
+
 export function createApp(): void {
   const app = getElement<HTMLDivElement>("#app");
   const state = createAppState(loadProgress(teams));
   const savedUI = loadUIState();
   let preferences = loadPreferences();
   let lastChangedStickerNumber = "";
+  let currentUser: User | null = null;
 
   state.selectedTeamIndex = savedUI.selectedTeamIndex ?? 0
 
@@ -46,10 +77,12 @@ export function createApp(): void {
     saveUIState({
       selectedTeamIndex: state.selectedTeamIndex,
     })
+    scheduleCloudSave();
   }
 
   function persistPreferences(): void {
     savePreferences(preferences);
+    scheduleCloudSave();
   }
 
   function applyPreferences(): void {
@@ -113,6 +146,18 @@ export function createApp(): void {
     return getAllStickers(state.albumTeams);
   }
 
+  function getRemoteSnapshot() {
+    return buildRemoteSnapshot(
+      state.albumTeams,
+      preferences,
+      state.selectedTeamIndex,
+    );
+  }
+
+  function scheduleCloudSave(): void {
+    debouncedCloudSave();
+  }
+
   renderAppShell(app);
 
   const albumSummary = getElement<HTMLDivElement>("#albumSummary");
@@ -121,6 +166,24 @@ export function createApp(): void {
   const stickerMatrix = getElement<HTMLDivElement>("#stickerMatrix");
   const teamHeader = getElement<HTMLDivElement>("#teamHeader");
   const stickerResults = getElement<HTMLParagraphElement>("#stickerResults");
+  const accountButton = getElement<HTMLButtonElement>("#accountButton");
+  const accountModal = getElement<HTMLDivElement>("#accountModal");
+  const closeAccount = getElement<HTMLButtonElement>("#closeAccount");
+  const accountStatus = getElement<HTMLParagraphElement>("#accountStatus");
+  const authForm = getElement<HTMLDivElement>("#authForm");
+  const accountCard = getElement<HTMLDivElement>("#accountCard");
+  const accountEmail = getElement<HTMLElement>("#accountEmail");
+  const authEmail = getElement<HTMLInputElement>("#authEmail");
+  const authPassword = getElement<HTMLInputElement>("#authPassword");
+  const signInButton = getElement<HTMLButtonElement>("#signInButton");
+  const signUpButton = getElement<HTMLButtonElement>("#signUpButton");
+  const googleSignInButton =
+    getElement<HTMLButtonElement>("#googleSignInButton");
+  const syncActions = getElement<HTMLDivElement>("#syncActions");
+  const saveCloudButton = getElement<HTMLButtonElement>("#saveCloudButton");
+  const loadCloudButton = getElement<HTMLButtonElement>("#loadCloudButton");
+  const signOutButton = getElement<HTMLButtonElement>("#signOutButton");
+  const syncMessage = getElement<HTMLParagraphElement>("#syncMessage");
   const helpButton = getElement<HTMLButtonElement>("#helpButton");
   const helpModal = getElement<HTMLDivElement>("#helpModal");
   const closeHelp = getElement<HTMLButtonElement>("#closeHelp");
@@ -135,6 +198,10 @@ export function createApp(): void {
   const importJson = getElement<HTMLButtonElement>("#importJson");
   const importJsonFile = getElement<HTMLInputElement>("#importJsonFile");
   const clearProgressButton = getElement<HTMLButtonElement>("#clearProgress");
+
+  const debouncedCloudSave = debounce(() => {
+    void syncCurrentToCloud(false);
+  }, 800);
 
   function updateAlbumSummary(): void {
     renderAlbumSummary(albumSummary, state.albumTeams);
@@ -259,6 +326,7 @@ export function createApp(): void {
     lastChangedStickerNumber = stickerNumber;
 
     debouncedSaveProgress(state.albumTeams);
+    scheduleCloudSave();
     updateTeamHeaderProgress(teamHeader, team);
     renderSelectedStickersOnly();
     updateActiveTeamProgressCell();
@@ -285,6 +353,126 @@ export function createApp(): void {
     renderSelectedTeamDetails();
     updateAlbumSummary();
     updateProgress();
+  }
+
+  function setSyncMessage(message: string): void {
+    syncMessage.textContent = message;
+  }
+
+  function updateAccountUI(): void {
+    const isLoggedIn = Boolean(currentUser);
+
+    if (!isSupabaseConfigured) {
+      accountStatus.textContent =
+        "Supabase ainda não foi configurado. O app segue salvando tudo no seu navegador.";
+      authForm.hidden = true;
+      accountCard.hidden = true;
+      syncActions.hidden = true;
+      setSyncMessage("");
+      return;
+    }
+
+    authForm.hidden = isLoggedIn;
+    accountCard.hidden = !isLoggedIn;
+    syncActions.hidden = !isLoggedIn;
+
+    accountEmail.textContent = currentUser?.email ?? "Usuário autenticado";
+    accountStatus.textContent = isLoggedIn
+      ? "Conta ativa. Agora você pode salvar e carregar seu progresso pela nuvem."
+      : "Você pode usar o app sem login. Entre ou crie uma conta para salvar seu progresso também na nuvem.";
+  }
+
+  async function syncCurrentToCloud(showMessage = true): Promise<void> {
+    if (!currentUser) return;
+
+    try {
+      await saveRemoteSnapshot(currentUser.id, getRemoteSnapshot());
+
+      if (showMessage) {
+        setSyncMessage("Progresso salvo na nuvem.");
+      }
+    } catch {
+      if (showMessage) {
+        setSyncMessage("Não foi possível salvar na nuvem agora.");
+      }
+    }
+  }
+
+  async function loadCloudIntoApp(showMessage = true): Promise<void> {
+    if (!currentUser) return;
+
+    try {
+      const snapshot = await loadRemoteSnapshot(currentUser.id);
+
+      if (!snapshot) {
+        await syncCurrentToCloud(false);
+        if (showMessage) {
+          setSyncMessage("Nenhum progresso na nuvem ainda. Seu progresso local foi enviado.");
+        }
+        return;
+      }
+
+      applyRemoteSnapshot(state.albumTeams, snapshot);
+      preferences = {
+        ...defaultPreferences,
+        ...snapshot.preferences,
+      };
+      state.selectedTeamIndex = snapshot.ui.selectedTeamIndex;
+
+      if (
+        state.selectedTeamIndex < 0 ||
+        state.selectedTeamIndex >= state.albumTeams.length
+      ) {
+        state.selectedTeamIndex = 0;
+      }
+
+      saveProgress(state.albumTeams);
+      savePreferences(preferences);
+      saveUIState({
+        selectedTeamIndex: state.selectedTeamIndex,
+      });
+      applyPreferences();
+      renderCurrentState();
+
+      if (showMessage) {
+        setSyncMessage("Progresso carregado da nuvem.");
+      }
+    } catch {
+      if (showMessage) {
+        setSyncMessage("Não foi possível carregar os dados da nuvem agora.");
+      }
+    }
+  }
+
+  async function handlePasswordAuth(mode: "sign-in" | "sign-up"): Promise<void> {
+    const email = authEmail.value.trim();
+    const password = authPassword.value;
+
+    if (!email || !password) {
+      setSyncMessage("Informe email e senha para continuar.");
+      return;
+    }
+
+    try {
+      setSyncMessage("Conectando...");
+
+      if (mode === "sign-in") {
+        await signInWithPassword(email, password);
+      } else {
+        await signUpWithPassword(email, password);
+      }
+
+      currentUser = await getCurrentUser();
+      updateAccountUI();
+      await loadCloudIntoApp(false);
+      setSyncMessage(
+        mode === "sign-in"
+          ? "Login realizado."
+          : "Conta criada. Se a confirmação por email estiver ativa, confirme o email antes de entrar.",
+      );
+    } catch (error) {
+      setSyncMessage(`Não foi possível autenticar: ${getErrorMessage(error)}`);
+    }
   }
 
   function buildBackupJson(): string {
@@ -394,6 +582,7 @@ export function createApp(): void {
         saveProgress(state.albumTeams);
         persistUI();
         renderCurrentState();
+        scheduleCloudSave();
         settingsModal.classList.remove("open");
       } catch {
         window.alert("Não foi possível importar este JSON.");
@@ -419,6 +608,15 @@ export function createApp(): void {
     shareModal.classList.remove("open");
   }
 
+  function openAccountModal(): void {
+    updateAccountUI();
+    accountModal.classList.add("open");
+  }
+
+  function closeAccountModal(): void {
+    accountModal.classList.remove("open");
+  }
+
   function openHelpModal(): void {
     helpModal.classList.add("open");
   }
@@ -442,6 +640,7 @@ export function createApp(): void {
 
     clearProgress();
     renderCurrentState();
+    void syncCurrentToCloud(false);
     closeSettingsModal();
   }
 
@@ -450,6 +649,52 @@ export function createApp(): void {
   renderSelectedTeamDetails();
   updateAlbumSummary();
   updateProgress();
+  updateAccountUI();
+
+  void getCurrentUser().then((user) => {
+    currentUser = user;
+    updateAccountUI();
+
+    if (currentUser) {
+      void loadCloudIntoApp(false);
+    }
+  });
+
+  onAuthChange((authState) => {
+    currentUser = authState.user;
+    updateAccountUI();
+  });
+
+  accountButton.addEventListener("click", openAccountModal);
+  closeAccount.addEventListener("click", closeAccountModal);
+  accountModal.addEventListener("click", (event) => {
+    if (event.target === accountModal) {
+      closeAccountModal();
+    }
+  });
+  signInButton.addEventListener("click", () => {
+    void handlePasswordAuth("sign-in");
+  });
+  signUpButton.addEventListener("click", () => {
+    void handlePasswordAuth("sign-up");
+  });
+  googleSignInButton.addEventListener("click", () => {
+    setSyncMessage("Redirecionando para o Google...");
+    void signInWithGoogle();
+  });
+  saveCloudButton.addEventListener("click", () => {
+    void syncCurrentToCloud(true);
+  });
+  loadCloudButton.addEventListener("click", () => {
+    void loadCloudIntoApp(true);
+  });
+  signOutButton.addEventListener("click", () => {
+    void signOut().then(() => {
+      currentUser = null;
+      updateAccountUI();
+      setSyncMessage("Você saiu da conta. O progresso local continua neste navegador.");
+    });
+  });
 
   helpButton.addEventListener("click", openHelpModal);
   closeHelp.addEventListener("click", closeHelpModal);

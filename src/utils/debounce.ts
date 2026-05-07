@@ -4,7 +4,7 @@ export function debounce<T extends (...args: any[]) => void>(
 ): (...args: Parameters<T>) => void {
   let timeout: number | undefined;
   return (...args: Parameters<T>) => {
-    clearTimeout(timeout);
+    window.clearTimeout(timeout);
     timeout = window.setTimeout(() => func(...args), wait);
   };
 }

@@ -10,6 +10,13 @@ export function renderAppShell(container: HTMLElement): void {
     </div>
 
     <div class="header-actions">
+      <button class="settings-button account-button" type="button" id="accountButton" aria-label="Abrir conta e sincronização">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+          <path d="M20 21a8 8 0 0 0-16 0" />
+          <circle cx="12" cy="8" r="4" />
+        </svg>
+      </button>
+
       <button class="settings-button" type="button" id="helpButton" aria-label="Abrir dúvidas sobre o app">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
           <path d="M9.2 9a3 3 0 0 1 5.82 1c0 2-3 2.25-3 4.25" />
@@ -67,6 +74,57 @@ export function renderAppShell(container: HTMLElement): void {
       <div id="stickerMatrix" class="sticker-matrix"></div>
     </section>
   </main>
+</div>
+
+<div class="modal-backdrop" id="accountModal" role="dialog" aria-modal="true" aria-labelledby="accountTitle">
+  <div class="account-modal">
+    <p class="kicker">Conta</p>
+    <h2 id="accountTitle">Login e sincronização</h2>
+
+    <p class="account-status" id="accountStatus">Você pode usar o app sem login. Com uma conta, seu progresso também fica salvo na nuvem.</p>
+
+    <div class="auth-form" id="authForm">
+      <button class="google-auth-button" type="button" id="googleSignInButton">
+        <span aria-hidden="true">G</span>
+        Entrar com Google
+      </button>
+
+      <div class="auth-divider"><span>ou use email e senha</span></div>
+
+      <label>
+        Email
+        <input id="authEmail" type="email" autocomplete="email" placeholder="seu@email.com" />
+      </label>
+
+      <label>
+        Senha
+        <input id="authPassword" type="password" autocomplete="current-password" placeholder="Mínimo 6 caracteres" />
+      </label>
+
+      <div class="auth-actions">
+        <button class="primary-action" type="button" id="signInButton">Entrar</button>
+        <button class="ghost" type="button" id="signUpButton">Criar conta</button>
+      </div>
+    </div>
+
+    <div class="account-card" id="accountCard" hidden>
+      <span>Conectado</span>
+      <strong id="accountEmail">Usuário autenticado</strong>
+      <p>Seu progresso continua salvo neste navegador. Use a nuvem para manter tudo sincronizado entre dispositivos.</p>
+    </div>
+
+    <div class="sync-actions" id="syncActions" hidden>
+      <button class="primary-action" type="button" id="saveCloudButton">Salvar na nuvem</button>
+      <button class="ghost" type="button" id="loadCloudButton">Carregar da nuvem</button>
+      <button class="danger-soft" type="button" id="signOutButton">Sair</button>
+    </div>
+
+    <p class="sync-message" id="syncMessage" role="status"></p>
+
+    <div class="modal-actions">
+      <button class="ghost" type="button" id="closeAccount">Fechar</button>
+    </div>
+  </div>
 </div>
 
 <div class="modal-backdrop" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">

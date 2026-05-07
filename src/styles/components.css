@@ -5,6 +5,10 @@
   overflow: hidden;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 .beta-badge {
   position: fixed;
   top: 10px;
@@ -28,6 +32,7 @@
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .settings-button {
@@ -54,6 +59,28 @@
   width: 20px;
   height: 20px;
   stroke-width: 2.1;
+}
+
+.account-button {
+  border-color: rgba(20, 92, 67, 0.34);
+  background: rgba(20, 92, 67, 0.12);
+  color: var(--have);
+}
+
+@media (max-width: 380px) {
+  .header-actions {
+    gap: 6px;
+  }
+
+  .settings-button {
+    width: 38px;
+    height: 38px;
+  }
+
+  .settings-button svg {
+    width: 18px;
+    height: 18px;
+  }
 }
 
 .summary {
@@ -610,7 +637,8 @@ html[data-team-matrix="6x4"] .team-section-icon {
 
 .settings-modal,
 .share-modal,
-.help-modal {
+.help-modal,
+.account-modal {
   width: min(100%, 420px);
   max-height: min(720px, calc(100svh - 36px));
   padding: 18px;
@@ -626,7 +654,8 @@ html[data-team-matrix="6x4"] .team-section-icon {
 
 .modal-backdrop.open .settings-modal,
 .modal-backdrop.open .share-modal,
-.modal-backdrop.open .help-modal {
+.modal-backdrop.open .help-modal,
+.modal-backdrop.open .account-modal {
   transform: translateY(0) scale(1);
 }
 
@@ -684,6 +713,131 @@ html[data-team-matrix="6x4"] .team-section-icon {
   overflow-wrap: anywhere;
 }
 
+.account-status,
+.sync-message {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 760;
+  line-height: 1.4;
+}
+
+.auth-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.google-auth-button {
+  min-height: 44px;
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 900;
+  transition:
+    transform 140ms ease,
+    border-color 180ms ease,
+    background 180ms ease;
+}
+
+.google-auth-button span {
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #1a73e8;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.auth-divider {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 10px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  height: 1px;
+  background: var(--line);
+}
+
+.auth-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.auth-form input {
+  min-height: 42px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 0 12px;
+  background: var(--surface-soft);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 760;
+}
+
+.auth-actions,
+.sync-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sync-actions {
+  margin-top: 16px;
+}
+
+.account-card {
+  display: grid;
+  gap: 6px;
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid rgba(20, 92, 67, 0.22);
+  border-radius: 18px;
+  background: rgba(20, 92, 67, 0.08);
+}
+
+.account-card span {
+  color: var(--have);
+  font-size: 10px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.account-card strong {
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.account-card p {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 760;
+  line-height: 1.35;
+}
+
 .kicker {
   margin: 0 0 3px;
   color: var(--muted);
@@ -734,7 +888,9 @@ html[data-team-matrix="6x4"] .team-section-icon {
 .segmented button,
 .ghost,
 .solid,
-.danger {
+.danger,
+.primary-action,
+.danger-soft {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -761,16 +917,31 @@ html[data-team-matrix="6x4"] .team-section-icon {
   color: var(--surface);
 }
 
+.primary-action {
+  border-color: var(--have);
+  background: var(--have);
+  color: #ffffff;
+}
+
 .danger {
   border-color: rgba(168, 68, 75, 0.32);
   background: rgba(168, 68, 75, 0.1);
   color: var(--danger);
 }
 
+.danger-soft {
+  border-color: rgba(168, 68, 75, 0.24);
+  background: transparent;
+  color: var(--danger);
+}
+
 .segmented button:active,
 .ghost:active,
 .solid:active,
-.danger:active {
+.danger:active,
+.primary-action:active,
+.danger-soft:active,
+.google-auth-button:active {
   transform: scale(0.97);
 }
 

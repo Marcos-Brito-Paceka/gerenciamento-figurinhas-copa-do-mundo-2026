@@ -19,6 +19,14 @@
   padding: 8px 2px 14px;
 }
 
+.header > div:first-child {
+  min-width: 0;
+}
+
+.header h1 {
+  font-size: 19px;
+}
+
 .header p,
 #stickerResults,
 .team-header p {
