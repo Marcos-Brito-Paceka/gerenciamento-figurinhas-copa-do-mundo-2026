@@ -5,6 +5,12 @@
   overflow: hidden;
 }
 
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .settings-button {
   width: 44px;
   height: 44px;
@@ -582,7 +588,8 @@ html[data-team-matrix="6x4"] .team-section-icon {
   backdrop-filter: blur(5px);
 }
 
-.settings-modal {
+.settings-modal,
+.share-modal {
   width: min(100%, 420px);
   max-height: min(720px, calc(100svh - 36px));
   padding: 18px;
@@ -596,8 +603,40 @@ html[data-team-matrix="6x4"] .team-section-icon {
   transition: transform 220ms ease;
 }
 
-.modal-backdrop.open .settings-modal {
+.modal-backdrop.open .settings-modal,
+.modal-backdrop.open .share-modal {
   transform: translateY(0) scale(1);
+}
+
+.share-modal {
+  text-align: center;
+}
+
+.qr-card {
+  width: min(100%, 280px);
+  margin: 18px auto 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  background: #ffffff;
+}
+
+.qr-card img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.share-link {
+  margin: 12px auto 0;
+  max-width: 300px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 760;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .kicker {

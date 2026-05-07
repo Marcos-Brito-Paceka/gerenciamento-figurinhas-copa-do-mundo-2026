@@ -7,12 +7,23 @@ export function renderAppShell(container: HTMLElement): void {
       <p id="progressText">Progresso: ...</p>
     </div>
 
-    <button class="settings-button" type="button" id="settingsButton" aria-label="Configurações">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-        <path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z" />
-        <path d="M19.4 15a1.8 1.8 0 0 0 .4 2l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.8 1.8 0 0 0-2-.4 1.8 1.8 0 0 0-1 1.7V21a2 2 0 0 1-4 0v-.1a1.8 1.8 0 0 0-1-1.7 1.8 1.8 0 0 0-2 .4l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.8 1.8 0 0 0 .4-2 1.8 1.8 0 0 0-1.7-1H3a2 2 0 0 1 0-4h.1a1.8 1.8 0 0 0 1.7-1 1.8 1.8 0 0 0-.4-2l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.8 1.8 0 0 0 2 .4 1.8 1.8 0 0 0 1-1.7V3a2 2 0 0 1 4 0v.1a1.8 1.8 0 0 0 1 1.7 1.8 1.8 0 0 0 2-.4l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.8 1.8 0 0 0-.4 2 1.8 1.8 0 0 0 1.7 1h.1a2 2 0 0 1 0 4h-.1a1.8 1.8 0 0 0-1.7 1Z" />
-      </svg>
-    </button>
+    <div class="header-actions">
+      <button class="settings-button" type="button" id="shareButton" aria-label="Abrir QR code do site">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+          <rect x="3" y="3" width="7" height="7" rx="1.4" />
+          <rect x="14" y="3" width="7" height="7" rx="1.4" />
+          <rect x="3" y="14" width="7" height="7" rx="1.4" />
+          <path d="M14 14h3v3h-3zM19 14h2M14 21h2M18 18h3v3" />
+        </svg>
+      </button>
+
+      <button class="settings-button" type="button" id="settingsButton" aria-label="Configurações">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+          <path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z" />
+          <path d="M19.4 15a1.8 1.8 0 0 0 .4 2l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.8 1.8 0 0 0-2-.4 1.8 1.8 0 0 0-1 1.7V21a2 2 0 0 1-4 0v-.1a1.8 1.8 0 0 0-1-1.7 1.8 1.8 0 0 0-2 .4l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.8 1.8 0 0 0 .4-2 1.8 1.8 0 0 0-1.7-1H3a2 2 0 0 1 0-4h.1a1.8 1.8 0 0 0 1.7-1 1.8 1.8 0 0 0-.4-2l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.8 1.8 0 0 0 2 .4 1.8 1.8 0 0 0 1-1.7V3a2 2 0 0 1 4 0v.1a1.8 1.8 0 0 0 1 1.7 1.8 1.8 0 0 0 2-.4l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.8 1.8 0 0 0-.4 2 1.8 1.8 0 0 0 1.7 1h.1a2 2 0 0 1 0 4h-.1a1.8 1.8 0 0 0-1.7 1Z" />
+        </svg>
+      </button>
+    </div>
   </header>
 
   <aside class="sidebar">
@@ -40,6 +51,20 @@ export function renderAppShell(container: HTMLElement): void {
       <div id="stickerMatrix" class="sticker-matrix"></div>
     </section>
   </main>
+</div>
+
+<div class="modal-backdrop" id="shareModal" role="dialog" aria-modal="true" aria-labelledby="shareTitle">
+  <div class="share-modal">
+    <p class="kicker">Compartilhar</p>
+    <h2 id="shareTitle">QR code do site</h2>
+    <a class="qr-card" href="https://marcos-brito-copa-do-mundo-2026.vercel.app/" target="_blank" rel="noreferrer">
+      <img src="/site-qr.svg" alt="QR code para acessar o site do Álbum 2026" />
+    </a>
+    <p class="share-link">marcos-brito-copa-do-mundo-2026.vercel.app</p>
+    <div class="modal-actions">
+      <button class="solid" type="button" id="closeShare">Fechar</button>
+    </div>
+  </div>
 </div>
 
 <div class="modal-backdrop" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
