@@ -22,9 +22,10 @@ describe('storage', () => {
   const mockTeam: Team = {
     id: 'BRA',
     name: 'Brazil',
+    code: 'BRA',
     stickers: [
-      { number: '1', name: 'Player1', type: 'player', status: 'have' },
-      { number: '2', name: 'Player2', type: 'player', status: 'missing' },
+      { number: '1', type: 'player', status: 'have' },
+      { number: '2', type: 'player', status: 'missing' },
     ],
   };
 

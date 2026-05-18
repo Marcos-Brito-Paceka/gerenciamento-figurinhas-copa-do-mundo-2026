@@ -2,7 +2,6 @@ export type StickerStatus = 'missing' | 'have' | 'duplicate'
 
 export type Sticker = {
   number: string
-  name: string
   type: string
   status: StickerStatus
 }

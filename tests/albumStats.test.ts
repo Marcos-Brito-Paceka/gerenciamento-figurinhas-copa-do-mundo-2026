@@ -4,10 +4,10 @@ import type { Sticker, Team } from '../src/types/album';
 
 describe('albumStats', () => {
   const mockStickers: Sticker[] = [
-    { number: '1', name: 'Player1', type: 'player', status: 'have' },
-    { number: '2', name: 'Player2', type: 'player', status: 'missing' },
-    { number: '3', name: 'Player3', type: 'player', status: 'duplicate' },
-    { number: '4', name: 'Player4', type: 'player', status: 'have' },
+    { number: '1', type: 'player', status: 'have' },
+    { number: '2', type: 'player', status: 'missing' },
+    { number: '3', type: 'player', status: 'duplicate' },
+    { number: '4', type: 'player', status: 'have' },
   ];
 
   const mockTeam: Team = {

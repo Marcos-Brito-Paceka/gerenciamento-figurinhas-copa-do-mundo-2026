@@ -1,6 +1,5 @@
 import type { Team } from "../types/album";
 import { teamCatalog } from "./teamCatalog";
-import { playerPool } from "./playerPool";
 
 const openingSections: Team[] = [
   {
@@ -13,7 +12,6 @@ const openingSections: Team[] = [
 
       return {
         number,
-        name: `Especial ${number}`,
         type: "Especial",
         status: "missing",
       };
@@ -29,7 +27,6 @@ const openingSections: Team[] = [
 
       return {
         number: `FWC ${number}`,
-        name: `Bola e países ${number}`,
         type: "FWC - Bola e países",
         status: "missing",
       };
@@ -45,7 +42,6 @@ const openingSections: Team[] = [
 
       return {
         number: `FWC ${number}`,
-        name: `História ${number}`,
         type: "FWC - História",
         status: "missing",
       };
@@ -68,7 +64,6 @@ const nationalTeams: Team[] = teamCatalog.map(([id, name, code]) => ({
 
     return {
       number: `${code} ${number}`,
-      name: playerPool[stickerIndex],
       type,
       status: "missing",
     };

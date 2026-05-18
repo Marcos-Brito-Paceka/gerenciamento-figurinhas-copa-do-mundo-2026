@@ -479,20 +479,6 @@ html[data-team-matrix="6x4"] .team-cell::after {
   line-height: 1;
 }
 
-.sticker-cell > .sticker-name {
-  display: block;
-  width: 100%;
-  justify-self: center;
-  z-index: 1;
-  text-align: center;
-  font-size: 9px;
-  font-weight: 820;
-  line-height: 1.05;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .sticker-cell[data-status="missing"] {
   color: var(--ink);
   background: #f0ede4;

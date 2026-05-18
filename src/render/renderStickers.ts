@@ -23,7 +23,6 @@ export function renderStickers(
         >
           <span class="sticker-number">${sticker.number}</span>
           <span class="sticker-symbol">${statusSymbol[sticker.status]}</span>
-          <span class="sticker-name">${sticker.name}</span>
         </button>
       `,
     )
