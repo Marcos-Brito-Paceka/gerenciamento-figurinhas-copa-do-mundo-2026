@@ -39,6 +39,7 @@ import {
   signUpWithPassword,
 } from "../services/remoteStorage";
 import { debounce } from "../utils/debounce";
+import { normalizeScannedStickerNumber } from "../utils/scannerCode";
 import type { AppPreferences, StickerStatus } from "../types/album";
 import type { User } from "@supabase/supabase-js";
 
@@ -72,8 +73,23 @@ type ScannerVideoElement = HTMLElement & {
 };
 
 type ScannerCanvasContext = {
+  fillStyle: string;
   filter: string;
   drawImage: (image: ScannerVideoElement, ...args: number[]) => void;
+  fillRect: (x: number, y: number, width: number, height: number) => void;
+  getImageData: (
+    sx: number,
+    sy: number,
+    sw: number,
+    sh: number,
+  ) => {
+    data: Uint8ClampedArray;
+  };
+  putImageData: (
+    imageData: ReturnType<ScannerCanvasContext["getImageData"]>,
+    dx: number,
+    dy: number,
+  ) => void;
 };
 
 type ScannerCanvasElement = HTMLElement & {
@@ -83,6 +99,32 @@ type ScannerCanvasElement = HTMLElement & {
     contextId: "2d",
     options?: { willReadFrequently: boolean },
   ) => ScannerCanvasContext | null;
+  toDataURL: (type?: string) => string;
+};
+
+type ScannerImageElement = HTMLElement & {
+  src: string;
+  removeAttribute: (qualifiedName: string) => void;
+};
+
+type ScannerFrameVariant = {
+  label: string;
+  image: string;
+};
+
+type ScannerCrop = {
+  label: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+type ScannerBounds = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 };
 
 function getElement<T extends HTMLElement>(selector: string): T {
@@ -119,10 +161,7 @@ export function createApp(): void {
   let currentUser: User | null = null;
   let scannerStream: CameraStream | null = null;
   let scannerOcrWorker: Promise<OcrWorker> | null = null;
-  let scannerTimer = 0;
   let scannerOcrBusy = false;
-  let scannerLastCode = "";
-  let scannerLastCodeHits = 0;
   let scannerDetectedNumber = "";
 
   state.selectedTeamIndex = savedUI.selectedTeamIndex ?? 0
@@ -275,8 +314,14 @@ export function createApp(): void {
   const scannerVideo = getElement<ScannerVideoElement>("#scannerVideo");
   const scannerCanvas = getElement<ScannerCanvasElement>("#scannerCanvas");
   const scannerMessage = getElement<HTMLParagraphElement>("#scannerMessage");
+  const scannerDebugImage =
+    getElement<ScannerImageElement>("#scannerDebugImage");
+  const scannerDebugText =
+    getElement<HTMLElement>("#scannerDebugText");
   const scannerManualCode =
     getElement<HTMLInputElement>("#scannerManualCode");
+  const scannerReadFrame =
+    getElement<HTMLButtonElement>("#scannerReadFrame");
   const scannerCheckCode =
     getElement<HTMLButtonElement>("#scannerCheckCode");
   const scannerResult = getElement<HTMLDivElement>("#scannerResult");
@@ -513,32 +558,7 @@ export function createApp(): void {
   }
 
   function getNormalizedStickerNumber(value: string): string | null {
-    const compact = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
-    const nationalTeams = state.albumTeams.filter(
-      (team) => team.kind === "team",
-    );
-
-    for (const team of nationalTeams) {
-      const codeIndex = compact.indexOf(team.code);
-
-      if (codeIndex === -1) continue;
-
-      const possibleNumber = compact
-        .slice(codeIndex + team.code.length, codeIndex + team.code.length + 3)
-        .replace(/[OQ]/g, "0")
-        .replace(/[IL]/g, "1");
-      const numberMatch = possibleNumber.match(/^\d{1,2}/);
-
-      if (!numberMatch) continue;
-
-      const stickerIndex = Number(numberMatch[0]);
-
-      if (stickerIndex < 1 || stickerIndex > 20) continue;
-
-      return `${team.code} ${String(stickerIndex).padStart(2, "0")}`;
-    }
-
-    return null;
+    return normalizeScannedStickerNumber(value, state.albumTeams);
   }
 
   function getScannerStatusText(status: StickerStatus): string {
@@ -610,7 +630,185 @@ export function createApp(): void {
     showScannerResult(sticker.number);
   }
 
-  function getScannerFrameContext(): ScannerCanvasContext | null {
+  function applyScannerThreshold(
+    context: ScannerCanvasContext,
+    inverted: boolean,
+    threshold: number,
+  ): void {
+    const imageData = context.getImageData(
+      0,
+      0,
+      scannerCanvas.width,
+      scannerCanvas.height,
+    );
+    const { data } = imageData;
+
+    for (let index = 0; index < data.length; index += 4) {
+      const gray = data[index] * 0.299 + data[index + 1] * 0.587 + data[index + 2] * 0.114;
+      const value = gray > threshold ? 255 : 0;
+      const output = inverted ? 255 - value : value;
+
+      data[index] = output;
+      data[index + 1] = output;
+      data[index + 2] = output;
+    }
+
+    context.putImageData(imageData, 0, 0);
+  }
+
+  function findScannerBadgeBounds(
+    context: ScannerCanvasContext,
+  ): ScannerBounds | null {
+    const width = scannerCanvas.width;
+    const height = scannerCanvas.height;
+    const imageData = context.getImageData(0, 0, width, height);
+    const { data } = imageData;
+    const visited = new Uint8Array(width * height);
+    let bestBounds: ScannerBounds | null = null;
+    let bestArea = 0;
+
+    function isDarkPixel(x: number, y: number): boolean {
+      const index = (y * width + x) * 4;
+      const gray =
+        data[index] * 0.299 + data[index + 1] * 0.587 + data[index + 2] * 0.114;
+
+      return gray < 92;
+    }
+
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        const startIndex = y * width + x;
+
+        if (visited[startIndex] || !isDarkPixel(x, y)) continue;
+
+        const stack = [startIndex];
+        visited[startIndex] = 1;
+        let area = 0;
+        let minX = x;
+        let maxX = x;
+        let minY = y;
+        let maxY = y;
+
+        while (stack.length) {
+          const current = stack.pop() ?? 0;
+          const currentX = current % width;
+          const currentY = Math.floor(current / width);
+
+          area += 1;
+          minX = Math.min(minX, currentX);
+          maxX = Math.max(maxX, currentX);
+          minY = Math.min(minY, currentY);
+          maxY = Math.max(maxY, currentY);
+
+          const neighbors = [
+            current - 1,
+            current + 1,
+            current - width,
+            current + width,
+          ];
+
+          neighbors.forEach((neighbor) => {
+            if (neighbor < 0 || neighbor >= visited.length) return;
+
+            const neighborX = neighbor % width;
+            const neighborY = Math.floor(neighbor / width);
+
+            if (
+              Math.abs(neighborX - currentX) + Math.abs(neighborY - currentY) !==
+                1 ||
+              visited[neighbor] ||
+              !isDarkPixel(neighborX, neighborY)
+            ) {
+              return;
+            }
+
+            visited[neighbor] = 1;
+            stack.push(neighbor);
+          });
+        }
+
+        const bounds = {
+          x: minX,
+          y: minY,
+          width: maxX - minX + 1,
+          height: maxY - minY + 1,
+        };
+        const isLikelyBadge =
+          bounds.width > width * 0.18 &&
+          bounds.height > height * 0.22 &&
+          area > bestArea;
+
+        if (isLikelyBadge) {
+          bestArea = area;
+          bestBounds = bounds;
+        }
+      }
+    }
+
+    return bestBounds;
+  }
+
+  function isolateScannerBadge(context: ScannerCanvasContext): boolean {
+    const bounds = findScannerBadgeBounds(context);
+
+    if (!bounds) return false;
+
+    const padding = 14;
+    const x = Math.max(0, bounds.x - padding);
+    const y = Math.max(0, bounds.y - padding);
+    const width = Math.min(scannerCanvas.width - x, bounds.width + padding * 2);
+    const height = Math.min(scannerCanvas.height - y, bounds.height + padding * 2);
+    const badgeImage = context.getImageData(x, y, width, height);
+
+    scannerCanvas.width = width + padding * 2;
+    scannerCanvas.height = height + padding * 2;
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, scannerCanvas.width, scannerCanvas.height);
+    context.putImageData(badgeImage, padding, padding);
+
+    return true;
+  }
+
+  function createScannerFrameVariant(
+    crop: ScannerCrop,
+    context: ScannerCanvasContext,
+    options: {
+      filter: string;
+      inverted?: boolean;
+      isolateBadge?: boolean;
+      threshold?: number;
+      suffix: string;
+    },
+  ): ScannerFrameVariant {
+    context.filter = options.filter;
+    context.drawImage(
+      scannerVideo,
+      crop.x,
+      crop.y,
+      crop.width,
+      crop.height,
+      0,
+      0,
+      scannerCanvas.width,
+      scannerCanvas.height,
+    );
+    context.filter = "none";
+
+    const isolated = options.isolateBadge
+      ? isolateScannerBadge(context)
+      : false;
+
+    if (typeof options.threshold === "number") {
+      applyScannerThreshold(context, Boolean(options.inverted), options.threshold);
+    }
+
+    return {
+      label: `${crop.label} ${isolated ? "pílula " : ""}${options.suffix}`,
+      image: scannerCanvas.toDataURL("image/png"),
+    };
+  }
+
+  function getScannerFrameVariants(): ScannerFrameVariant[] | null {
     if (scannerVideo.readyState < 2) return null;
 
     const context = scannerCanvas.getContext("2d", {
@@ -624,33 +822,77 @@ export function createApp(): void {
 
     if (!width || !height) return null;
 
-    const stickerFrameWidth = Math.min(width * 0.78, height * 0.62);
-    const stickerFrameHeight = stickerFrameWidth / 0.72;
+    const stickerFrameHeight = Math.min(height * 0.82, (width * 0.78) / 0.72);
+    const stickerFrameWidth = stickerFrameHeight * 0.72;
     const stickerFrameX = (width - stickerFrameWidth) / 2;
     const stickerFrameY = (height - stickerFrameHeight) / 2;
-    const sourceWidth = stickerFrameWidth * 0.36;
-    const sourceHeight = stickerFrameHeight * 0.12;
-    const sourceX = stickerFrameX + stickerFrameWidth * 0.6;
-    const sourceY = stickerFrameY + stickerFrameHeight * 0.04;
-    const scale = 2.6;
+    const crops: ScannerCrop[] = [
+      {
+        label: "canto",
+        x: stickerFrameX + stickerFrameWidth * 0.54,
+        y: stickerFrameY + stickerFrameHeight * 0.02,
+        width: stickerFrameWidth * 0.44,
+        height: stickerFrameHeight * 0.15,
+      },
+      {
+        label: "topo",
+        x: stickerFrameX + stickerFrameWidth * 0.08,
+        y: stickerFrameY + stickerFrameHeight * 0.02,
+        width: stickerFrameWidth * 0.9,
+        height: stickerFrameHeight * 0.17,
+      },
+      {
+        label: "canto ampliado",
+        x: stickerFrameX + stickerFrameWidth * 0.48,
+        y: stickerFrameY,
+        width: stickerFrameWidth * 0.5,
+        height: stickerFrameHeight * 0.2,
+      },
+    ];
+    const scale = 4;
+    const variants: ScannerFrameVariant[] = [];
 
-    scannerCanvas.width = Math.round(sourceWidth * scale);
-    scannerCanvas.height = Math.round(sourceHeight * scale);
-    context.filter = "grayscale(1) contrast(2.4)";
-    context.drawImage(
-      scannerVideo,
-      sourceX,
-      sourceY,
-      sourceWidth,
-      sourceHeight,
-      0,
-      0,
-      scannerCanvas.width,
-      scannerCanvas.height,
-    );
-    context.filter = "none";
+    crops.forEach((crop) => {
+      scannerCanvas.width = Math.round(crop.width * scale);
+      scannerCanvas.height = Math.round(crop.height * scale);
 
-    return context;
+      variants.push(
+        createScannerFrameVariant(crop, context, {
+          filter: "grayscale(1) contrast(2.2)",
+          isolateBadge: true,
+          suffix: "contraste",
+        }),
+      );
+      variants.push(
+        createScannerFrameVariant(crop, context, {
+          filter: "grayscale(1) contrast(3)",
+          isolateBadge: true,
+          threshold: 120,
+          suffix: "limiar baixo",
+        }),
+      );
+      variants.push(
+        createScannerFrameVariant(crop, context, {
+          filter: "grayscale(1) contrast(3)",
+          isolateBadge: true,
+          threshold: 150,
+          suffix: "limiar alto",
+        }),
+      );
+      variants.push(
+        createScannerFrameVariant(crop, context, {
+          filter: "grayscale(1) contrast(3)",
+          isolateBadge: true,
+          inverted: true,
+          threshold: 150,
+          suffix: "invertido",
+        }),
+      );
+    });
+
+    scannerDebugImage.src = variants[0]?.image ?? "";
+
+    return variants;
   }
 
   async function getScannerOcrWorker(): Promise<OcrWorker> {
@@ -679,6 +921,8 @@ export function createApp(): void {
     const normalizedCode = getNormalizedStickerNumber(rawText);
     const cleanText = rawText.replace(/\s+/g, " ").trim();
 
+    scannerDebugText.textContent = cleanText || "Sem texto detectado";
+
     if (!normalizedCode) {
       scannerMessage.textContent = cleanText
         ? `Li "${cleanText}", mas ainda não reconheci um código válido.`
@@ -686,35 +930,53 @@ export function createApp(): void {
       return;
     }
 
-    if (normalizedCode === scannerLastCode) {
-      scannerLastCodeHits += 1;
-    } else {
-      scannerLastCode = normalizedCode;
-      scannerLastCodeHits = 1;
-    }
+    showScannerResult(normalizedCode, true);
+  }
 
-    if (scannerLastCodeHits >= 2) {
-      showScannerResult(normalizedCode, true);
-    } else {
-      scannerMessage.textContent = `Detectei ${normalizedCode}. Segure mais um instante.`;
-    }
+  async function recognizeScannerVariant(
+    worker: OcrWorker,
+    variant: ScannerFrameVariant,
+  ): Promise<boolean> {
+    scannerDebugImage.src = variant.image;
+
+    const result = await worker.recognize(variant.image);
+    const cleanText = result.data.text.replace(/\s+/g, " ").trim();
+    const normalizedCode = getNormalizedStickerNumber(result.data.text);
+
+    scannerDebugText.textContent = `${variant.label}: ${
+      cleanText || "sem texto"
+    }`;
+
+    if (!normalizedCode) return false;
+
+    handleScannerDetectedCode(result.data.text);
+    return true;
   }
 
   async function scanCameraFrame(): Promise<void> {
     if (scannerOcrBusy) return;
 
-    const context = getScannerFrameContext();
+    const frameVariants = getScannerFrameVariants();
 
-    if (!context) return;
+    if (!frameVariants) return;
 
     scannerOcrBusy = true;
     scannerMessage.textContent = "Lendo a área marcada...";
 
     try {
       const worker = await getScannerOcrWorker();
-      const result = await worker.recognize(scannerCanvas);
+      let matched = false;
 
-      handleScannerDetectedCode(result.data.text);
+      for (const variant of frameVariants) {
+        matched = await recognizeScannerVariant(worker, variant);
+
+        if (matched) break;
+      }
+
+      if (!matched) {
+        scannerMessage.textContent =
+          "OCR rodou nas versões normal e invertida, mas não reconheceu um código válido.";
+      }
     } catch {
       scannerMessage.textContent =
         "Não consegui ler automaticamente agora. Digite o código abaixo para verificar.";
@@ -735,11 +997,6 @@ export function createApp(): void {
   }
 
   function stopScannerCamera(): void {
-    if (scannerTimer) {
-      window.clearInterval(scannerTimer);
-      scannerTimer = 0;
-    }
-
     scannerStream?.getTracks().forEach((track) => track.stop());
     scannerStream = null;
     scannerVideo.srcObject = null;
@@ -752,11 +1009,11 @@ export function createApp(): void {
     scannerResult.hidden = true;
     scannerResultActions.hidden = true;
     scannerManualCode.value = "";
+    scannerDebugImage.removeAttribute("src");
+    scannerDebugText.textContent = "Aguardando leitura...";
     scannerDetectedNumber = "";
-    scannerLastCode = "";
-    scannerLastCodeHits = 0;
     scannerMessage.textContent =
-      "Alinhe o código com a marcação. A leitura automática pode levar alguns segundos.";
+      "Alinhe o código com a marcação e toque em Ler imagem.";
 
     try {
       scannerStream = await navigator.mediaDevices.getUserMedia({
@@ -767,10 +1024,6 @@ export function createApp(): void {
       });
       scannerVideo.srcObject = scannerStream;
       await scannerVideo.play();
-
-      scannerTimer = window.setInterval(() => {
-        void scanCameraFrame();
-      }, 1800);
     } catch {
       scannerMessage.textContent =
         "Não foi possível abrir a câmera. Digite o código da figurinha para verificar.";
@@ -1131,6 +1384,9 @@ export function createApp(): void {
   });
   scannerCheckCode.addEventListener("click", () => {
     showScannerResult(scannerManualCode.value);
+  });
+  scannerReadFrame.addEventListener("click", () => {
+    void scanCameraFrame();
   });
   scannerManualCode.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {

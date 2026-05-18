@@ -113,6 +113,7 @@ export function renderAppShell(container: HTMLElement): void {
       <div>
         <p class="kicker">Scanner</p>
         <h2 id="scannerTitle">Ler verso da figurinha</h2>
+        <p class="scanner-beta-note">Recurso em fase de testes. Confira o resultado antes de confirmar.</p>
       </div>
       <button class="scanner-close" type="button" id="scannerClose" aria-label="Fechar scanner">×</button>
     </div>
@@ -128,8 +129,17 @@ export function renderAppShell(container: HTMLElement): void {
 
     <p class="scanner-message" id="scannerMessage" role="status">Encaixe a figurinha inteira no molde. A leitura acontece no canto superior direito.</p>
 
+    <div class="scanner-debug" id="scannerDebug">
+      <div>
+        <strong>Recorte enviado ao OCR</strong>
+        <img id="scannerDebugImage" alt="Recorte usado para leitura OCR" />
+      </div>
+      <p>Texto bruto: <span id="scannerDebugText">Aguardando leitura...</span></p>
+    </div>
+
     <div class="scanner-manual">
       <input id="scannerManualCode" type="text" inputmode="text" autocomplete="off" placeholder="Ex: BRA10" />
+      <button class="ghost" type="button" id="scannerReadFrame">Ler imagem</button>
       <button class="ghost" type="button" id="scannerCheckCode">Verificar</button>
     </div>
 
