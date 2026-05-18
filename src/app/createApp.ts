@@ -42,21 +42,26 @@ import { debounce } from "../utils/debounce";
 import type { AppPreferences, StickerStatus } from "../types/album";
 import type { User } from "@supabase/supabase-js";
 
-type DetectedText = {
-  rawValue?: string;
-};
-
-type BrowserTextDetector = {
-  detect(source: unknown): Promise<DetectedText[]>;
-};
-
-type WindowWithTextDetector = typeof window & {
-  TextDetector?: new () => BrowserTextDetector;
-};
-
 type CameraStream = Awaited<
   ReturnType<typeof navigator.mediaDevices.getUserMedia>
 >;
+
+type OcrWorker = {
+  recognize: (image: unknown) => Promise<{
+    data: {
+      text: string;
+    };
+  }>;
+  setParameters: (params: Record<string, string>) => Promise<unknown>;
+  terminate: () => Promise<unknown>;
+};
+
+type TesseractModule = {
+  createWorker: (language?: string) => Promise<OcrWorker>;
+  PSM?: {
+    SINGLE_LINE?: string;
+  };
+};
 
 type ScannerVideoElement = HTMLElement & {
   readyState: number;
@@ -67,13 +72,8 @@ type ScannerVideoElement = HTMLElement & {
 };
 
 type ScannerCanvasContext = {
-  drawImage: (
-    image: ScannerVideoElement,
-    dx: number,
-    dy: number,
-    dw: number,
-    dh: number,
-  ) => void;
+  filter: string;
+  drawImage: (image: ScannerVideoElement, ...args: number[]) => void;
 };
 
 type ScannerCanvasElement = HTMLElement & {
@@ -110,10 +110,6 @@ function getErrorMessage(error: unknown): string {
   return "Erro desconhecido.";
 }
 
-function supportsTextDetector(): boolean {
-  return "TextDetector" in window;
-}
-
 export function createApp(): void {
   const app = getElement<HTMLDivElement>("#app");
   const state = createAppState(loadProgress(teams));
@@ -122,7 +118,9 @@ export function createApp(): void {
   let lastChangedStickerNumber = "";
   let currentUser: User | null = null;
   let scannerStream: CameraStream | null = null;
+  let scannerOcrWorker: Promise<OcrWorker> | null = null;
   let scannerTimer = 0;
+  let scannerOcrBusy = false;
   let scannerLastCode = "";
   let scannerLastCodeHits = 0;
   let scannerDetectedNumber = "";
@@ -612,53 +610,128 @@ export function createApp(): void {
     showScannerResult(sticker.number);
   }
 
-  async function scanCameraFrame(): Promise<void> {
-    if (!supportsTextDetector() || scannerVideo.readyState < 2) return;
+  function getScannerFrameContext(): ScannerCanvasContext | null {
+    if (scannerVideo.readyState < 2) return null;
 
     const context = scannerCanvas.getContext("2d", {
       willReadFrequently: true,
     });
 
-    if (!context) return;
+    if (!context) return null;
 
     const width = scannerVideo.videoWidth;
     const height = scannerVideo.videoHeight;
 
-    if (!width || !height) return;
+    if (!width || !height) return null;
 
-    scannerCanvas.width = width;
-    scannerCanvas.height = height;
-    context.drawImage(scannerVideo, 0, 0, width, height);
+    const stickerFrameWidth = Math.min(width * 0.78, height * 0.62);
+    const stickerFrameHeight = stickerFrameWidth / 0.72;
+    const stickerFrameX = (width - stickerFrameWidth) / 2;
+    const stickerFrameY = (height - stickerFrameHeight) / 2;
+    const sourceWidth = stickerFrameWidth * 0.36;
+    const sourceHeight = stickerFrameHeight * 0.12;
+    const sourceX = stickerFrameX + stickerFrameWidth * 0.6;
+    const sourceY = stickerFrameY + stickerFrameHeight * 0.04;
+    const scale = 2.6;
+
+    scannerCanvas.width = Math.round(sourceWidth * scale);
+    scannerCanvas.height = Math.round(sourceHeight * scale);
+    context.filter = "grayscale(1) contrast(2.4)";
+    context.drawImage(
+      scannerVideo,
+      sourceX,
+      sourceY,
+      sourceWidth,
+      sourceHeight,
+      0,
+      0,
+      scannerCanvas.width,
+      scannerCanvas.height,
+    );
+    context.filter = "none";
+
+    return context;
+  }
+
+  async function getScannerOcrWorker(): Promise<OcrWorker> {
+    if (!scannerOcrWorker) {
+      scannerMessage.textContent =
+        "Preparando OCR no aparelho. Na primeira vez pode levar alguns segundos.";
+
+      scannerOcrWorker = import("tesseract.js").then(async (module) => {
+        const tesseract = module as unknown as TesseractModule;
+        const worker = await tesseract.createWorker("eng");
+
+        await worker.setParameters({
+          tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ",
+          tessedit_pageseg_mode: tesseract.PSM?.SINGLE_LINE ?? "7",
+          preserve_interword_spaces: "1",
+        });
+
+        return worker;
+      });
+    }
+
+    return scannerOcrWorker;
+  }
+
+  function handleScannerDetectedCode(rawText: string): void {
+    const normalizedCode = getNormalizedStickerNumber(rawText);
+    const cleanText = rawText.replace(/\s+/g, " ").trim();
+
+    if (!normalizedCode) {
+      scannerMessage.textContent = cleanText
+        ? `Li "${cleanText}", mas ainda não reconheci um código válido.`
+        : "OCR rodou, mas não encontrou texto legível nessa área.";
+      return;
+    }
+
+    if (normalizedCode === scannerLastCode) {
+      scannerLastCodeHits += 1;
+    } else {
+      scannerLastCode = normalizedCode;
+      scannerLastCodeHits = 1;
+    }
+
+    if (scannerLastCodeHits >= 2) {
+      showScannerResult(normalizedCode, true);
+    } else {
+      scannerMessage.textContent = `Detectei ${normalizedCode}. Segure mais um instante.`;
+    }
+  }
+
+  async function scanCameraFrame(): Promise<void> {
+    if (scannerOcrBusy) return;
+
+    const context = getScannerFrameContext();
+
+    if (!context) return;
+
+    scannerOcrBusy = true;
+    scannerMessage.textContent = "Lendo a área marcada...";
 
     try {
-      const detector = new (window as WindowWithTextDetector).TextDetector!();
-      const detectedTexts = await detector.detect(scannerCanvas);
-      const detectedCode = detectedTexts
-        .map((item) => item.rawValue ?? "")
-        .find((value) => getNormalizedStickerNumber(value));
+      const worker = await getScannerOcrWorker();
+      const result = await worker.recognize(scannerCanvas);
 
-      if (!detectedCode) return;
-
-      const normalizedCode = getNormalizedStickerNumber(detectedCode);
-
-      if (!normalizedCode) return;
-
-      if (normalizedCode === scannerLastCode) {
-        scannerLastCodeHits += 1;
-      } else {
-        scannerLastCode = normalizedCode;
-        scannerLastCodeHits = 1;
-      }
-
-      if (scannerLastCodeHits >= 2) {
-        showScannerResult(normalizedCode, true);
-      } else {
-        scannerMessage.textContent = `Detectei ${normalizedCode}. Segure mais um instante.`;
-      }
+      handleScannerDetectedCode(result.data.text);
     } catch {
       scannerMessage.textContent =
-        "Não consegui ler automaticamente agora. Você pode digitar o código abaixo.";
+        "Não consegui ler automaticamente agora. Digite o código abaixo para verificar.";
+      scannerOcrWorker = null;
+    } finally {
+      scannerOcrBusy = false;
     }
+  }
+
+  function stopScannerOcr(): void {
+    if (!scannerOcrWorker) return;
+
+    void scannerOcrWorker
+      .then((worker) => worker.terminate())
+      .catch(() => undefined);
+    scannerOcrWorker = null;
+    scannerOcrBusy = false;
   }
 
   function stopScannerCamera(): void {
@@ -670,6 +743,7 @@ export function createApp(): void {
     scannerStream?.getTracks().forEach((track) => track.stop());
     scannerStream = null;
     scannerVideo.srcObject = null;
+    stopScannerOcr();
   }
 
   async function openScanner(): Promise<void> {
@@ -681,9 +755,8 @@ export function createApp(): void {
     scannerDetectedNumber = "";
     scannerLastCode = "";
     scannerLastCodeHits = 0;
-    scannerMessage.textContent = supportsTextDetector()
-      ? "Aponte a câmera para o código no topo do verso."
-      : "Câmera aberta. Se a leitura automática não aparecer, digite o código abaixo.";
+    scannerMessage.textContent =
+      "Alinhe o código com a marcação. A leitura automática pode levar alguns segundos.";
 
     try {
       scannerStream = await navigator.mediaDevices.getUserMedia({
@@ -695,11 +768,9 @@ export function createApp(): void {
       scannerVideo.srcObject = scannerStream;
       await scannerVideo.play();
 
-      if (supportsTextDetector()) {
-        scannerTimer = window.setInterval(() => {
-          void scanCameraFrame();
-        }, 1200);
-      }
+      scannerTimer = window.setInterval(() => {
+        void scanCameraFrame();
+      }, 1800);
     } catch {
       scannerMessage.textContent =
         "Não foi possível abrir a câmera. Digite o código da figurinha para verificar.";

@@ -43,6 +43,16 @@
   }
 }
 
+@keyframes scannerSweep {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(min(28vw, 108px));
+  }
+}
+
 html[data-motion="light"] *,
 html[data-motion="light"] *::before,
 html[data-motion="light"] *::after {

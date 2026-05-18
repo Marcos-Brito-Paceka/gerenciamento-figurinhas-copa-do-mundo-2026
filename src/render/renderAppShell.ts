@@ -122,11 +122,11 @@ export function renderAppShell(container: HTMLElement): void {
       <canvas id="scannerCanvas" hidden></canvas>
 
       <div class="scanner-guide" aria-hidden="true">
-        <span>HAI 20</span>
+        <span></span>
       </div>
     </div>
 
-    <p class="scanner-message" id="scannerMessage" role="status">Alinhe o código do topo do verso com a marcação. Exemplo: HAI 20.</p>
+    <p class="scanner-message" id="scannerMessage" role="status">Encaixe a figurinha inteira no molde. A leitura acontece no canto superior direito.</p>
 
     <div class="scanner-manual">
       <input id="scannerManualCode" type="text" inputmode="text" autocomplete="off" placeholder="Ex: BRA10" />
