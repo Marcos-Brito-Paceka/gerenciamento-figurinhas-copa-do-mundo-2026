@@ -7,7 +7,11 @@ import {
   saveProgress,
   debouncedSaveProgress,
 } from "../services/storage";
-import {getAllStickers, getProgressPercent, isTeamComplete,} from "../utils/albumStats";
+import {
+  getAllStickers,
+  getProgressPercent,
+  isTeamComplete,
+} from "../utils/albumStats";
 import { renderTeams } from "../render/renderTeams";
 import { renderStickers } from "../render/renderStickers";
 import { getNextStatus } from "../utils/stickerStatus";
@@ -162,6 +166,7 @@ export function createApp(): void {
 
   const albumSummary = getElement<HTMLDivElement>("#albumSummary");
   const teamSearch = getElement<HTMLInputElement>("#teamSearch");
+  const teamSearchClear = getElement<HTMLButtonElement>("#teamSearchClear");
   const incompleteFilter = getElement<HTMLButtonElement>("#incompleteFilter");
   const completedTeamsCount =
     getElement<HTMLElement>("#completedTeamsCount");
@@ -317,9 +322,11 @@ export function createApp(): void {
     renderTeams(matrix, visibleTeams, {
       selectedTeamId: selectedTeam.id,
       matrix: preferences.teamMatrix,
-      emptyMessage: state.showIncompleteOnly
-        ? "Todas as seleções visíveis já estão completas."
-        : undefined,
+      emptyMessage: state.teamQuery.trim()
+        ? "Nenhuma seleção encontrada para essa busca."
+        : state.showIncompleteOnly
+          ? "Todas as seleções já estão completas."
+          : undefined,
     });
   }
 
@@ -857,6 +864,7 @@ export function createApp(): void {
     },
 
     teamSearch,
+    teamSearchClear,
     incompleteFilter,
     toggleIncompleteFilter,
     setTeamQuery: (query) => {

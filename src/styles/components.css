@@ -577,11 +577,16 @@ html[data-team-matrix="6x4"] .team-section-icon {
   border: 1px solid rgba(0,0,0,0.1); /* Para bandeiras brancas não sumirem */
 }
 
+.team-search-control {
+  position: relative;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
 #teamSearch {
   width: 100%;
   min-height: 46px;
-  padding: 0 14px;
-  margin-bottom: 8px;
+  padding: 0 46px 0 14px;
 
   border: 1px solid var(--line);
   border-radius: var(--radius-pill);
@@ -598,6 +603,47 @@ html[data-team-matrix="6x4"] .team-section-icon {
     border-color 160ms ease,
     box-shadow 160ms ease,
     background 160ms ease;
+}
+
+#teamSearch::-webkit-search-cancel-button,
+#teamSearch::-webkit-search-decoration {
+  appearance: none;
+}
+
+.team-search-clear {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  background: transparent;
+  color: var(--ink);
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+  transition:
+    color 160ms ease,
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+.team-search-clear:hover {
+  opacity: 0.68;
+}
+
+.team-search-clear:active {
+  transform: translateY(-50%) scale(0.94);
+}
+
+.team-search-clear[hidden] {
+  display: none;
 }
 
 .incomplete-toggle {

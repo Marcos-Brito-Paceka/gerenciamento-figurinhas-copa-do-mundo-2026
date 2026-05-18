@@ -5,6 +5,7 @@ type BindAppEventsParams = {
   stickerMatrix: HTMLElement;
   albumTeams: Team[];
   teamSearch: HTMLInputElement;
+  teamSearchClear: HTMLButtonElement;
   incompleteFilter: HTMLButtonElement;
   getSelectedTeamIndex: () => number;
   setSelectedTeamIndex: (index: number) => void;
@@ -57,7 +58,16 @@ export function bindAppEvents(params: BindAppEventsParams): void {
     const target = event.target as HTMLInputElement;
 
     params.setTeamQuery(target.value);
+    params.teamSearchClear.hidden = target.value.length === 0;
     params.renderTeamMatrix();
+  });
+
+  params.teamSearchClear.addEventListener("click", () => {
+    params.teamSearch.value = "";
+    params.teamSearchClear.hidden = true;
+    params.setTeamQuery("");
+    params.renderTeamMatrix();
+    params.teamSearch.focus();
   });
 
   params.incompleteFilter.addEventListener("click", () => {
