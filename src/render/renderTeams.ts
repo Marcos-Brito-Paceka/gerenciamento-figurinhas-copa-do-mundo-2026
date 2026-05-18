@@ -7,6 +7,7 @@ type RenderTeamsOptions = {
   selectedTeamId: string;
   matrix: "4x3" | "5x3" | "6x4";
   visibleLimit?: number;
+  emptyMessage?: string;
 };
 
 export function renderTeams(
@@ -84,7 +85,7 @@ export function renderTeams(
               `,
             )
             .join("")
-        : `<p class="team-empty">Nenhuma seção ou seleção encontrada.</p>`
+        : `<p class="team-empty">${options.emptyMessage ?? "Nenhuma seção ou seleção encontrada."}</p>`
     }
   `;
 

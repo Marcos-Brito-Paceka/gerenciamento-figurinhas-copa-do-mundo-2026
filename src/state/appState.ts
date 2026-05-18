@@ -15,6 +15,7 @@ export type AppState = {
   albumTeams: Team[]
   selectedTeamIndex: number
   teamQuery: string
+  showIncompleteOnly: boolean
 }
 
 export function createAppState(teams: Team[]): AppState {
@@ -22,5 +23,6 @@ export function createAppState(teams: Team[]): AppState {
     albumTeams: teams,
     selectedTeamIndex: 0,
     teamQuery: '',
+    showIncompleteOnly: false,
   }
 }

@@ -54,11 +54,22 @@ export function renderAppShell(container: HTMLElement): void {
     <section class="section">
       
       <h2>Seleções</h2>
-        <input
+       <button
+        class="incomplete-toggle"
+        type="button"
+        id="incompleteFilter"
+        aria-pressed="false"
+      >
+        <span class="incomplete-toggle-track" aria-hidden="true">
+          <span class="incomplete-toggle-thumb"></span>
+        </span>
+        <span class="incomplete-toggle-label">Ocultar seleções completas</span>
+        <span class="incomplete-toggle-count" id="completedTeamsCount">0/48</span>
+      </button>  
+      <input
          id="teamSearch"
          type="search"
-         placeholder="Buscar seção, seleção ou sigla"
-         />
+         placeholder="Buscar seção, seleção ou sigla"/>
       <div id="teamMatrix" class="team-matrix"></div>
     </section>
   </aside>

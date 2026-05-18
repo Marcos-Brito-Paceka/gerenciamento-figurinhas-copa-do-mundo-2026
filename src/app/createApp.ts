@@ -7,7 +7,7 @@ import {
   saveProgress,
   debouncedSaveProgress,
 } from "../services/storage";
-import { getAllStickers, getProgressPercent } from "../utils/albumStats";
+import {getAllStickers, getProgressPercent, isTeamComplete,} from "../utils/albumStats";
 import { renderTeams } from "../render/renderTeams";
 import { renderStickers } from "../render/renderStickers";
 import { getNextStatus } from "../utils/stickerStatus";
@@ -162,6 +162,9 @@ export function createApp(): void {
 
   const albumSummary = getElement<HTMLDivElement>("#albumSummary");
   const teamSearch = getElement<HTMLInputElement>("#teamSearch");
+  const incompleteFilter = getElement<HTMLButtonElement>("#incompleteFilter");
+  const completedTeamsCount =
+    getElement<HTMLElement>("#completedTeamsCount");
   const matrix = getElement<HTMLDivElement>("#teamMatrix");
   const stickerMatrix = getElement<HTMLDivElement>("#stickerMatrix");
   const teamHeader = getElement<HTMLDivElement>("#teamHeader");
@@ -289,13 +292,34 @@ export function createApp(): void {
     lastChangedStickerNumber = "";
   }
 
+  function updateIncompleteFilterUI(): void {
+    const nationalTeams = state.albumTeams.filter((team) => team.kind === "team");
+    const completedTeams = nationalTeams.filter(isTeamComplete).length;
+
+    incompleteFilter.setAttribute(
+      "aria-pressed",
+      String(state.showIncompleteOnly),
+    );
+    incompleteFilter.classList.toggle("active", state.showIncompleteOnly);
+    incompleteFilter.setAttribute(
+      "aria-label",
+      `Ocultar seleções completas, ${completedTeams} de ${nationalTeams.length} completas`,
+    );
+    completedTeamsCount.textContent = `${completedTeams}/${nationalTeams.length}`;
+  }
+
   function renderTeamMatrix(): void {
     const selectedTeam = state.albumTeams[state.selectedTeamIndex];
     const visibleTeams = getVisibleTeams();
 
+    updateIncompleteFilterUI();
+
     renderTeams(matrix, visibleTeams, {
       selectedTeamId: selectedTeam.id,
       matrix: preferences.teamMatrix,
+      emptyMessage: state.showIncompleteOnly
+        ? "Todas as seleções visíveis já estão completas."
+        : undefined,
     });
   }
 
@@ -328,20 +352,58 @@ export function createApp(): void {
     debouncedSaveProgress(state.albumTeams);
     scheduleCloudSave();
     updateTeamHeaderProgress(teamHeader, team);
-    renderSelectedStickersOnly();
-    updateActiveTeamProgressCell();
+    if (state.showIncompleteOnly && isTeamComplete(team)) {
+      selectFirstVisibleTeam();
+      renderTeamMatrix();
+      renderSelectedTeamDetails();
+    } else {
+      renderSelectedStickersOnly();
+      updateActiveTeamProgressCell();
+    }
+    updateIncompleteFilterUI();
     updateProgress();
     updateAlbumSummary();
   }
 
   function getVisibleTeams() {
     const query = state.teamQuery.trim().toLowerCase();
+    const teams = state.showIncompleteOnly
+      ? state.albumTeams.filter((team) => !isTeamComplete(team))
+      : state.albumTeams;
 
-    if (!query) return state.albumTeams;
+    if (!query) return teams;
 
-    return state.albumTeams.filter((team) =>
+    return teams.filter((team) =>
       `${team.name} ${team.code}`.toLowerCase().includes(query),
     );
+  }
+
+  function selectFirstVisibleTeam(): void {
+    const visibleTeams = getVisibleTeams();
+
+    if (visibleTeams.some((team) => team.id === state.albumTeams[state.selectedTeamIndex]?.id)) {
+      return;
+    }
+
+    const firstVisibleTeam = visibleTeams[0];
+
+    if (!firstVisibleTeam) return;
+
+    const firstVisibleIndex = state.albumTeams.findIndex(
+      (team) => team.id === firstVisibleTeam.id,
+    );
+
+    if (firstVisibleIndex === -1) return;
+
+    state.selectedTeamIndex = firstVisibleIndex;
+    persistUI();
+  }
+
+  function toggleIncompleteFilter(): void {
+    state.showIncompleteOnly = !state.showIncompleteOnly;
+    selectFirstVisibleTeam();
+    renderTeamMatrix();
+    renderSelectedTeamDetails();
   }
 
   function isStickerStatus(value: unknown): value is StickerStatus {
@@ -795,8 +857,12 @@ export function createApp(): void {
     },
 
     teamSearch,
+    incompleteFilter,
+    toggleIncompleteFilter,
     setTeamQuery: (query) => {
       state.teamQuery = query;
+      selectFirstVisibleTeam();
+      renderSelectedTeamDetails();
     },
     getVisibleTeams,
     renderTeamMatrix,

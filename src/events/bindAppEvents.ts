@@ -5,6 +5,7 @@ type BindAppEventsParams = {
   stickerMatrix: HTMLElement;
   albumTeams: Team[];
   teamSearch: HTMLInputElement;
+  incompleteFilter: HTMLButtonElement;
   getSelectedTeamIndex: () => number;
   setSelectedTeamIndex: (index: number) => void;
   updateSelectedTeam: (index: number) => void;
@@ -14,6 +15,7 @@ type BindAppEventsParams = {
   getVisibleTeams: () => Team[];
   renderTeamMatrix: () => void;
   setTeamQuery: (query: string) => void;
+  toggleIncompleteFilter: () => void;
 };
 
 export function bindAppEvents(params: BindAppEventsParams): void {
@@ -56,5 +58,9 @@ export function bindAppEvents(params: BindAppEventsParams): void {
 
     params.setTeamQuery(target.value);
     params.renderTeamMatrix();
+  });
+
+  params.incompleteFilter.addEventListener("click", () => {
+    params.toggleIncompleteFilter();
   });
 }
