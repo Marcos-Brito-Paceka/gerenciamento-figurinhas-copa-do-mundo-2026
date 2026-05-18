@@ -18,6 +18,7 @@ export type AppPreferences = {
   motion: 'full' | 'light'
   sound: 'on' | 'off'
   vibration: 'on' | 'off'
+  scanner: 'on' | 'off'
   density: 'compact' | 'comfortable'
   statusCycle: 'full' | 'simple'
   teamMatrix: '4x3' | '5x3' | '6x4'

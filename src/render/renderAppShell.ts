@@ -1,6 +1,6 @@
 export function renderAppShell(container: HTMLElement): void {
   container.innerHTML = `
-  <div class="beta-badge" aria-label="Versão beta 0.0.1">beta 0.0.1</div>
+  <div class="beta-badge" aria-label="Versão beta 0.0.2">beta 0.0.2</div>
 
   <div class="app">
   <header class="header">
@@ -10,6 +10,14 @@ export function renderAppShell(container: HTMLElement): void {
     </div>
 
     <div class="header-actions">
+      <button class="settings-button scanner-button" type="button" id="scannerButton" aria-label="Escanear figurinha pela câmera" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+          <path d="M4 8V6a2 2 0 0 1 2-2h2.2l1.2 2h5.2l1.2-2H18a2 2 0 0 1 2 2v2" />
+          <rect x="3" y="8" width="18" height="12" rx="2.4" />
+          <circle cx="12" cy="14" r="3.2" />
+        </svg>
+      </button>
+
       <button class="settings-button account-button" type="button" id="accountButton" aria-label="Abrir conta e sincronização">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
           <path d="M20 21a8 8 0 0 0-16 0" />
@@ -97,6 +105,43 @@ export function renderAppShell(container: HTMLElement): void {
       <div id="stickerMatrix" class="sticker-matrix"></div>
     </section>
   </main>
+</div>
+
+<div class="scanner-drawer" id="scannerDrawer" aria-hidden="true">
+  <div class="scanner-panel" role="dialog" aria-modal="true" aria-labelledby="scannerTitle">
+    <div class="scanner-panel-header">
+      <div>
+        <p class="kicker">Scanner</p>
+        <h2 id="scannerTitle">Ler verso da figurinha</h2>
+      </div>
+      <button class="scanner-close" type="button" id="scannerClose" aria-label="Fechar scanner">×</button>
+    </div>
+
+    <div class="scanner-camera">
+      <video id="scannerVideo" playsinline muted></video>
+      <canvas id="scannerCanvas" hidden></canvas>
+
+      <div class="scanner-guide" aria-hidden="true">
+        <span>HAI 20</span>
+      </div>
+    </div>
+
+    <p class="scanner-message" id="scannerMessage" role="status">Alinhe o código do topo do verso com a marcação. Exemplo: HAI 20.</p>
+
+    <div class="scanner-manual">
+      <input id="scannerManualCode" type="text" inputmode="text" autocomplete="off" placeholder="Ex: BRA10" />
+      <button class="ghost" type="button" id="scannerCheckCode">Verificar</button>
+    </div>
+
+    <div class="scanner-result" id="scannerResult" hidden>
+      <span id="scannerResultCode">HAI 20</span>
+      <strong id="scannerResultTitle">Figurinha encontrada</strong>
+      <p id="scannerResultDescription"></p>
+      <div class="scanner-result-actions" id="scannerResultActions" hidden>
+        <button class="primary-action" type="button" id="scannerConfirmHave">Confirmar que tenho</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="modal-backdrop" id="accountModal" role="dialog" aria-modal="true" aria-labelledby="accountTitle">
@@ -217,6 +262,16 @@ export function renderAppShell(container: HTMLElement): void {
           <button class="danger" type="button" id="clearProgress">Limpar tudo</button>
         </div>
       </div>
+      <div class="setting-row">
+        <div>
+          <strong>Scanner da câmera</strong>
+          <span>Recurso em fase de testes para verificar figurinhas pelo verso. Nem todos os navegadores ou dispositivos possuem suporte.</span>
+        </div>
+        <div class="segmented">
+          <button type="button" data-scanner-option="on">Ativar</button>
+          <button type="button" data-scanner-option="off">Desativar</button>
+        </div>
+      </div>
 
       <div class="setting-row">
         <div>
@@ -262,7 +317,6 @@ export function renderAppShell(container: HTMLElement): void {
           <button type="button" data-vibration-option="off">Desligado</button>
         </div>
       </div>
-
       <div class="setting-row">
         <div>
           <strong>Status ao tocar</strong>

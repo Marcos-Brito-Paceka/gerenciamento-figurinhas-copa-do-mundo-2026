@@ -45,8 +45,15 @@
   }
 
   .header {
+    grid-template-columns: 1fr auto;
+    gap: 4px;
     grid-column: 1 / -1;
     border-bottom: 1px solid var(--line);
+  }
+
+  .header-actions {
+    flex-wrap: nowrap;
+    justify-content: flex-end;
   }
 
   .sidebar,

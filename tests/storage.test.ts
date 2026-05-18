@@ -35,6 +35,7 @@ describe('storage', () => {
     motion: 'full',
     sound: 'on',
     vibration: 'on',
+    scanner: 'off',
     density: 'compact',
     statusCycle: 'full',
     teamMatrix: '4x3',

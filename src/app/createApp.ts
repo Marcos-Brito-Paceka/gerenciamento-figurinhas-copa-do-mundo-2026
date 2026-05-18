@@ -42,6 +42,49 @@ import { debounce } from "../utils/debounce";
 import type { AppPreferences, StickerStatus } from "../types/album";
 import type { User } from "@supabase/supabase-js";
 
+type DetectedText = {
+  rawValue?: string;
+};
+
+type BrowserTextDetector = {
+  detect(source: unknown): Promise<DetectedText[]>;
+};
+
+type WindowWithTextDetector = typeof window & {
+  TextDetector?: new () => BrowserTextDetector;
+};
+
+type CameraStream = Awaited<
+  ReturnType<typeof navigator.mediaDevices.getUserMedia>
+>;
+
+type ScannerVideoElement = HTMLElement & {
+  readyState: number;
+  videoWidth: number;
+  videoHeight: number;
+  srcObject: CameraStream | null;
+  play: () => Promise<void>;
+};
+
+type ScannerCanvasContext = {
+  drawImage: (
+    image: ScannerVideoElement,
+    dx: number,
+    dy: number,
+    dw: number,
+    dh: number,
+  ) => void;
+};
+
+type ScannerCanvasElement = HTMLElement & {
+  width: number;
+  height: number;
+  getContext: (
+    contextId: "2d",
+    options?: { willReadFrequently: boolean },
+  ) => ScannerCanvasContext | null;
+};
+
 function getElement<T extends HTMLElement>(selector: string): T {
   const element = document.querySelector<T>(selector);
 
@@ -67,6 +110,10 @@ function getErrorMessage(error: unknown): string {
   return "Erro desconhecido.";
 }
 
+function supportsTextDetector(): boolean {
+  return "TextDetector" in window;
+}
+
 export function createApp(): void {
   const app = getElement<HTMLDivElement>("#app");
   const state = createAppState(loadProgress(teams));
@@ -74,6 +121,11 @@ export function createApp(): void {
   let preferences = loadPreferences();
   let lastChangedStickerNumber = "";
   let currentUser: User | null = null;
+  let scannerStream: CameraStream | null = null;
+  let scannerTimer = 0;
+  let scannerLastCode = "";
+  let scannerLastCodeHits = 0;
+  let scannerDetectedNumber = "";
 
   state.selectedTeamIndex = savedUI.selectedTeamIndex ?? 0
 
@@ -92,6 +144,12 @@ export function createApp(): void {
   function applyPreferences(): void {
     document.documentElement.dataset.motion = preferences.motion;
     document.documentElement.dataset.teamMatrix = preferences.teamMatrix;
+    scannerButton.hidden = preferences.scanner === "off";
+
+    if (preferences.scanner === "off") {
+      closeScanner();
+    }
+
     updateSettingsUI();
   }
 
@@ -114,6 +172,13 @@ export function createApp(): void {
       button.classList.toggle(
         "active",
         button.dataset.vibrationOption === preferences.vibration,
+      );
+    });
+
+    document.querySelectorAll<HTMLButtonElement>("[data-scanner-option]").forEach((button) => {
+      button.classList.toggle(
+        "active",
+        button.dataset.scannerOption === preferences.scanner,
       );
     });
 
@@ -206,6 +271,27 @@ export function createApp(): void {
   const importJson = getElement<HTMLButtonElement>("#importJson");
   const importJsonFile = getElement<HTMLInputElement>("#importJsonFile");
   const clearProgressButton = getElement<HTMLButtonElement>("#clearProgress");
+  const scannerButton = getElement<HTMLButtonElement>("#scannerButton");
+  const scannerDrawer = getElement<HTMLDivElement>("#scannerDrawer");
+  const scannerClose = getElement<HTMLButtonElement>("#scannerClose");
+  const scannerVideo = getElement<ScannerVideoElement>("#scannerVideo");
+  const scannerCanvas = getElement<ScannerCanvasElement>("#scannerCanvas");
+  const scannerMessage = getElement<HTMLParagraphElement>("#scannerMessage");
+  const scannerManualCode =
+    getElement<HTMLInputElement>("#scannerManualCode");
+  const scannerCheckCode =
+    getElement<HTMLButtonElement>("#scannerCheckCode");
+  const scannerResult = getElement<HTMLDivElement>("#scannerResult");
+  const scannerResultCode =
+    getElement<HTMLElement>("#scannerResultCode");
+  const scannerResultTitle =
+    getElement<HTMLElement>("#scannerResultTitle");
+  const scannerResultDescription =
+    getElement<HTMLParagraphElement>("#scannerResultDescription");
+  const scannerResultActions =
+    getElement<HTMLDivElement>("#scannerResultActions");
+  const scannerConfirmHave =
+    getElement<HTMLButtonElement>("#scannerConfirmHave");
 
   const debouncedCloudSave = debounce(() => {
     void syncCurrentToCloud(false);
@@ -426,6 +512,204 @@ export function createApp(): void {
 
   function setSyncMessage(message: string): void {
     syncMessage.textContent = message;
+  }
+
+  function getNormalizedStickerNumber(value: string): string | null {
+    const compact = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    const nationalTeams = state.albumTeams.filter(
+      (team) => team.kind === "team",
+    );
+
+    for (const team of nationalTeams) {
+      const codeIndex = compact.indexOf(team.code);
+
+      if (codeIndex === -1) continue;
+
+      const possibleNumber = compact
+        .slice(codeIndex + team.code.length, codeIndex + team.code.length + 3)
+        .replace(/[OQ]/g, "0")
+        .replace(/[IL]/g, "1");
+      const numberMatch = possibleNumber.match(/^\d{1,2}/);
+
+      if (!numberMatch) continue;
+
+      const stickerIndex = Number(numberMatch[0]);
+
+      if (stickerIndex < 1 || stickerIndex > 20) continue;
+
+      return `${team.code} ${String(stickerIndex).padStart(2, "0")}`;
+    }
+
+    return null;
+  }
+
+  function getScannerStatusText(status: StickerStatus): string {
+    if (status === "have") return "Você já tem essa figurinha.";
+    if (status === "duplicate") return "Você marcou essa figurinha como repetida.";
+
+    return "Essa figurinha ainda está faltando.";
+  }
+
+  function showScannerResult(rawCode: string, stable = false): void {
+    const stickerNumber = getNormalizedStickerNumber(rawCode);
+
+    scannerResult.hidden = false;
+    scannerResultActions.hidden = true;
+
+    if (!stickerNumber) {
+      scannerDetectedNumber = "";
+      scannerResultCode.textContent = rawCode.trim().toUpperCase() || "--";
+      scannerResultTitle.textContent = "Código não reconhecido";
+      scannerResultDescription.textContent =
+        "Tente aproximar o verso da figurinha ou digite o código manualmente.";
+      return;
+    }
+
+    const team = state.albumTeams.find((item) =>
+      item.stickers.some((sticker) => sticker.number === stickerNumber),
+    );
+    const sticker = team?.stickers.find(
+      (item) => item.number === stickerNumber,
+    );
+
+    scannerDetectedNumber = stickerNumber;
+    scannerResultCode.textContent = stickerNumber;
+
+    if (!team || !sticker) {
+      scannerResultTitle.textContent = "Figurinha não encontrada";
+      scannerResultDescription.textContent =
+        "O código foi lido, mas não existe no catálogo atual do álbum.";
+      return;
+    }
+
+    scannerResultTitle.textContent = team.name;
+    scannerResultDescription.textContent = `${getScannerStatusText(sticker.status)}${
+      stable ? " Leitura confirmada pela câmera." : ""
+    }`;
+    scannerResultActions.hidden = sticker.status !== "missing";
+  }
+
+  function confirmScannedSticker(): void {
+    if (!scannerDetectedNumber) return;
+
+    const team = state.albumTeams.find((item) =>
+      item.stickers.some((sticker) => sticker.number === scannerDetectedNumber),
+    );
+    const sticker = team?.stickers.find(
+      (item) => item.number === scannerDetectedNumber,
+    );
+
+    if (!team || !sticker) return;
+
+    sticker.status = "have";
+    lastChangedStickerNumber = sticker.number;
+    debouncedSaveProgress(state.albumTeams);
+    scheduleCloudSave();
+    if (state.showIncompleteOnly && isTeamComplete(team)) {
+      selectFirstVisibleTeam();
+    }
+    renderCurrentState();
+    showScannerResult(sticker.number);
+  }
+
+  async function scanCameraFrame(): Promise<void> {
+    if (!supportsTextDetector() || scannerVideo.readyState < 2) return;
+
+    const context = scannerCanvas.getContext("2d", {
+      willReadFrequently: true,
+    });
+
+    if (!context) return;
+
+    const width = scannerVideo.videoWidth;
+    const height = scannerVideo.videoHeight;
+
+    if (!width || !height) return;
+
+    scannerCanvas.width = width;
+    scannerCanvas.height = height;
+    context.drawImage(scannerVideo, 0, 0, width, height);
+
+    try {
+      const detector = new (window as WindowWithTextDetector).TextDetector!();
+      const detectedTexts = await detector.detect(scannerCanvas);
+      const detectedCode = detectedTexts
+        .map((item) => item.rawValue ?? "")
+        .find((value) => getNormalizedStickerNumber(value));
+
+      if (!detectedCode) return;
+
+      const normalizedCode = getNormalizedStickerNumber(detectedCode);
+
+      if (!normalizedCode) return;
+
+      if (normalizedCode === scannerLastCode) {
+        scannerLastCodeHits += 1;
+      } else {
+        scannerLastCode = normalizedCode;
+        scannerLastCodeHits = 1;
+      }
+
+      if (scannerLastCodeHits >= 2) {
+        showScannerResult(normalizedCode, true);
+      } else {
+        scannerMessage.textContent = `Detectei ${normalizedCode}. Segure mais um instante.`;
+      }
+    } catch {
+      scannerMessage.textContent =
+        "Não consegui ler automaticamente agora. Você pode digitar o código abaixo.";
+    }
+  }
+
+  function stopScannerCamera(): void {
+    if (scannerTimer) {
+      window.clearInterval(scannerTimer);
+      scannerTimer = 0;
+    }
+
+    scannerStream?.getTracks().forEach((track) => track.stop());
+    scannerStream = null;
+    scannerVideo.srcObject = null;
+  }
+
+  async function openScanner(): Promise<void> {
+    scannerDrawer.classList.add("open");
+    scannerDrawer.setAttribute("aria-hidden", "false");
+    scannerResult.hidden = true;
+    scannerResultActions.hidden = true;
+    scannerManualCode.value = "";
+    scannerDetectedNumber = "";
+    scannerLastCode = "";
+    scannerLastCodeHits = 0;
+    scannerMessage.textContent = supportsTextDetector()
+      ? "Aponte a câmera para o código no topo do verso."
+      : "Câmera aberta. Se a leitura automática não aparecer, digite o código abaixo.";
+
+    try {
+      scannerStream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: {
+          facingMode: { ideal: "environment" },
+        },
+      });
+      scannerVideo.srcObject = scannerStream;
+      await scannerVideo.play();
+
+      if (supportsTextDetector()) {
+        scannerTimer = window.setInterval(() => {
+          void scanCameraFrame();
+        }, 1200);
+      }
+    } catch {
+      scannerMessage.textContent =
+        "Não foi possível abrir a câmera. Digite o código da figurinha para verificar.";
+    }
+  }
+
+  function closeScanner(): void {
+    stopScannerCamera();
+    scannerDrawer.classList.remove("open");
+    scannerDrawer.setAttribute("aria-hidden", "true");
   }
 
   function updateAccountUI(): void {
@@ -765,6 +1049,25 @@ export function createApp(): void {
     });
   });
 
+  scannerButton.addEventListener("click", () => {
+    void openScanner();
+  });
+  scannerClose.addEventListener("click", closeScanner);
+  scannerDrawer.addEventListener("click", (event) => {
+    if (event.target === scannerDrawer) {
+      closeScanner();
+    }
+  });
+  scannerCheckCode.addEventListener("click", () => {
+    showScannerResult(scannerManualCode.value);
+  });
+  scannerManualCode.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      showScannerResult(scannerManualCode.value);
+    }
+  });
+  scannerConfirmHave.addEventListener("click", confirmScannedSticker);
+
   helpButton.addEventListener("click", openHelpModal);
   closeHelp.addEventListener("click", closeHelpModal);
   helpModal.addEventListener("click", (event) => {
@@ -815,6 +1118,7 @@ export function createApp(): void {
     const vibrationOption = target.closest<HTMLButtonElement>(
       "[data-vibration-option]",
     );
+    const scannerOption = target.closest<HTMLButtonElement>("[data-scanner-option]");
     const cycleOption = target.closest<HTMLButtonElement>("[data-cycle-option]");
     const matrixOption = target.closest<HTMLButtonElement>("[data-matrix-option]");
 
@@ -833,6 +1137,11 @@ export function createApp(): void {
       vibrationOption?.dataset.vibrationOption === "off"
     ) {
       updatePreference("vibration", vibrationOption.dataset.vibrationOption);
+      return;
+    }
+
+    if (scannerOption?.dataset.scannerOption === "on" || scannerOption?.dataset.scannerOption === "off") {
+      updatePreference("scanner", scannerOption.dataset.scannerOption);
       return;
     }
 
